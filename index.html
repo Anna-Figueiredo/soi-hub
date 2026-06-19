@@ -303,6 +303,7 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
   .login-card{padding:22px 16px;}
   .login-wrap{padding:0 12px;}
   .contacts-toolbar > div:last-child{margin-left:0;width:100%;justify-content:flex-end;}
+  #tableToggle{display:none!important;}
   .followup-tabs{gap:4px;}
   .fu-tab{font-size:12px;padding:5px 10px;}
 }
@@ -478,6 +479,15 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
           <div class="panel"><div class="panel-title">Active Pipeline</div><div id="pipelinePanel"><div class="empty-state"><div class="empty-state-title">No pending referrals</div></div></div></div>
         </div>
         <div class="panel"><div class="panel-title">All Referrals <span style="font-size:14px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0" id="refAllCount"></span></div><div id="allReferralsTable"><div class="empty-state"><div class="empty-state-title">No referrals tracked yet</div><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="openReferralModal()">Add First Referral</button></div></div></div>
+      </div>
+
+      <!-- REFERRAL PROFILE -->
+      <div class="view" id="view-referral-profile">
+        <div class="back-btn" id="refProfileBackBtn" onclick="navigate('referrals')">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M9 12L4.5 7.5 9 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Back to Referrals
+        </div>
+        <div class="profile-wrap" id="refProfileContent"></div>
       </div>
 
       <div class="view" id="view-followup">
@@ -723,6 +733,46 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
   </div>
 </div>
 
+
+<!-- EDIT REFERRAL MODAL -->
+<div class="modal-overlay" id="editReferralOverlay" onclick="closeEditReferralOutside(event)">
+  <div class="modal modal-sm">
+    <div class="modal-title">Edit Referral</div>
+    <div class="modal-sub">Update this referral's information.</div>
+    <input type="hidden" id="editRefId"/>
+    <div class="form-section-label">Referral Source</div>
+    <div class="form-group"><label>Source Contact (existing)</label><select class="form-select" id="erSource"><option value="">— Select contact —</option></select></div>
+    <div class="form-group"><label>Or: Source Name</label><input class="form-input" id="erSourceName" placeholder="Free-type a name"/></div>
+    <div class="form-section-label">Referral Contact Info</div>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input class="form-input" id="erFirst" placeholder="First name"/></div>
+      <div class="form-group"><label>Last Name</label><input class="form-input" id="erLast" placeholder="Last name"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Phone</label><input class="form-input" id="erPhone" placeholder="(555) 000-0000"/></div>
+      <div class="form-group"><label>Email</label><input class="form-input" id="erEmail" placeholder="email@example.com"/></div>
+    </div>
+    <div class="form-section-label">Details</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date Received</label><input class="form-input" id="erDate" type="date"/></div>
+      <div class="form-group"><label>Status</label>
+        <select class="form-select" id="erStatus">
+          <option value="pending">Pending</option>
+          <option value="closed">Closed</option>
+          <option value="lost">Lost</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><textarea class="form-textarea" id="erNotes" placeholder="Notes about this referral…" style="min-height:70px"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeEditReferral()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditReferral()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5l3 3 6-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -1009,7 +1059,7 @@ function navigate(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
-  const titles={dashboard:'Dashboard',contacts:'Contacts',profile:'Contact Profile',referrals:'Referrals',followup:'Follow-Up Center',charts:'Charts',reports:'Reports',ai:'AI Insights',settings:'Settings'};
+  const titles={dashboard:'Dashboard',contacts:'Contacts',profile:'Contact Profile',referrals:'Referrals','referral-profile':'Referral Profile',followup:'Follow-Up Center',charts:'Charts',reports:'Reports',ai:'AI Insights',settings:'Settings'};
   document.getElementById('topbarTitle').textContent=titles[view]||'SOI Hub';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+view+"'"))n.classList.add('active');});
   closeSidebar();
@@ -1091,7 +1141,7 @@ function showProfile(id){
   navigate('profile');
   document.getElementById('topbarTitle').textContent=c.first+' '+c.last;
   const cRefs=referrals.filter(r=>String(r.source_contact_id)===String(id));
-  const refListHtml=cRefs.length?cRefs.map(r=>`<div class="ref-item"><div class="ref-item-header"><div><div class="ref-item-name">${r.first_name} ${r.last_name}</div><div class="ref-item-meta">${statusBadge(r.status)}<span>${fmtDate(r.date)}</span>${r.phone?`<span>${r.phone}</span>`:''}</div></div></div>${r.notes?`<div class="ref-item-notes">${r.notes}</div>`:''}</div>`).join(''):'<div style="font-size:15px;color:var(--text-muted);padding:8px 0">No referrals from this contact yet.</div>';
+  const refListHtml=cRefs.length?cRefs.map(r=>`<div class="ref-item" style="cursor:pointer" onclick="showReferralProfile('${r.id}')"><div class="ref-item-header"><div style="flex:1"><div class="ref-item-name">${r.first_name} ${r.last_name}</div><div class="ref-item-meta">${statusBadge(r.status)}<span>${fmtDate(r.date)}</span>${r.phone?`<span>${r.phone}</span>`:''}</div></div><button onclick="event.stopPropagation();deleteReferral('${r.id}','${c.id}')" style="background:transparent;border:none;cursor:pointer;color:var(--danger);padding:4px;opacity:0.7" title="Delete referral"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3.5h10M4.5 3.5V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v1M5.5 6v4M7.5 6v4M2.5 3.5l.6 7a.5.5 0 00.5.5h5.8a.5.5 0 00.5-.5l.6-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>${r.notes?`<div class="ref-item-notes">${r.notes}</div>`:''}</div>`).join(''):'<div style="font-size:15px;color:var(--text-muted);padding:8px 0">No referrals from this contact yet.</div>';
   document.getElementById('profileContent').innerHTML=`
   <div class="profile-left">
     <div class="profile-main-card">
@@ -1099,7 +1149,7 @@ function showProfile(id){
       <div class="profile-name">${c.first} ${c.last}</div>
       <div class="profile-type">${c.type} · ${c.category}</div>
       <div class="profile-tier-row"><span class="mini-tag ${tierClass(c.tier)}">${c.tier} Tier</span>${cRefs.length>0?`<span class="mini-tag badge-green">${cRefs.length} Referral${cRefs.length!==1?'s':''}</span>`:''}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:13px"><button class="act-btn" onclick="openInteractionLog('${c.id}','call')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2h2l.9 2.2-1.3 1.1A5.5 5.5 0 006.7 9.1l1.1-1.3 2.2.9V10a.7.7 0 01-.7.7A8.7 8.7 0 01.3 2.7.7.7 0 011 2z" stroke="currentColor" stroke-width="1.1"/></svg>Call</button><button class="act-btn" onclick="openInteractionLog('${c.id}','text')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".8" y=".8" width="9.4" height="7" rx="1.2" stroke="currentColor" stroke-width="1.1"/><path d="M3 9.5l1.5-1.7h3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Text</button><button class="act-btn" onclick="openInteractionLog('${c.id}','email')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".8" y="2" width="9.4" height="7" rx="1" stroke="currentColor" stroke-width="1.1"/><path d=".8 3l4.7 2.8 4.7-2.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Email</button><button class="act-btn" onclick="openEditContact('${c.id}')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5l2-2 5-5a1 1 0 011.5 1.5l-5 5-2 2H1v-1.5z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Edit</button></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:13px"><button class="act-btn" onclick="openInteractionLog('${c.id}','call')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2h2l.9 2.2-1.3 1.1A5.5 5.5 0 006.7 9.1l1.1-1.3 2.2.9V10a.7.7 0 01-.7.7A8.7 8.7 0 01.3 2.7.7.7 0 011 2z" stroke="currentColor" stroke-width="1.1"/></svg>Call</button><button class="act-btn" onclick="openInteractionLog('${c.id}','text')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".8" y=".8" width="9.4" height="7" rx="1.2" stroke="currentColor" stroke-width="1.1"/><path d="M3 9.5l1.5-1.7h3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Text</button><button class="act-btn" onclick="openInteractionLog('${c.id}','email')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".8" y="2" width="9.4" height="7" rx="1" stroke="currentColor" stroke-width="1.1"/><path d=".8 3l4.7 2.8 4.7-2.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Email</button><button class="act-btn" onclick="openEditContact('${c.id}')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5l2-2 5-5a1 1 0 011.5 1.5l-5 5-2 2H1v-1.5z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Edit</button><button class="act-btn" onclick="deleteContact('${c.id}')" style="color:var(--danger);border-color:rgba(184,92,92,0.3)"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 3h8M4 3V2a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M5 5v3.5M6 5v3.5M2.5 3l.5 6a.5.5 0 00.5.5h4a.5.5 0 00.5-.5l.5-6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Delete</button></div>
     </div>
     <div class="panel">
       <div class="quick-stat-row">
@@ -1195,7 +1245,7 @@ function updateReferralView(){
   const pipeR=referrals.filter(r=>r.status==='pending');
   document.getElementById('pipelinePanel').innerHTML=pipeR.length?pipeR.slice(0,6).map(r=>`<div class="mini-contact"><div style="flex:1"><div class="mini-name">${r.first_name} ${r.last_name}</div><div class="mini-detail">From: ${r.source_name||'Unknown'} · ${fmtDate(r.date)}</div></div>${statusBadge(r.status)}</div>`).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-state-title" style="font-size:18px">No pending referrals</div></div>';
   document.getElementById('refAllCount').textContent=total?`(${total} total)`:'';
-  document.getElementById('allReferralsTable').innerHTML=referrals.length?`<div class="ref-table-wrap"><table class="ref-table"><thead><tr><th>Referral</th><th>Source</th><th>Date</th><th>Status</th><th>Notes</th></tr></thead><tbody>${referrals.map(r=>`<tr><td><div style="font-weight:600">${r.first_name} ${r.last_name}</div>${r.phone?`<div style="font-size:14px;color:var(--text-muted)">${r.phone}</div>`:''}</td><td>${r.source_name||'—'}</td><td>${fmtDate(r.date)}</td><td>${statusBadge(r.status)}</td><td style="font-size:14px;color:var(--text-muted);max-width:160px">${r.notes||'—'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><div class="empty-state-title">No referrals tracked yet</div><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="openReferralModal()">Add First Referral</button></div>';
+  document.getElementById('allReferralsTable').innerHTML=referrals.length?`<div class="ref-table-wrap"><table class="ref-table"><thead><tr><th>Referral</th><th>Source</th><th>Date</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>${referrals.map(r=>`<tr style="cursor:pointer" onclick="showReferralProfile('${r.id}')"><td><div style="font-weight:600">${r.first_name} ${r.last_name}</div>${r.phone?`<div style="font-size:14px;color:var(--text-muted)">${r.phone}</div>`:''}</td><td>${r.source_name||'—'}</td><td>${fmtDate(r.date)}</td><td>${statusBadge(r.status)}</td><td style="font-size:14px;color:var(--text-muted);max-width:120px">${r.notes||'—'}</td><td onclick="event.stopPropagation()"><button onclick="deleteReferral('${r.id}',null)" style="background:transparent;border:none;cursor:pointer;color:var(--danger);padding:4px" title="Delete"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3.5h10M4.5 3.5V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v1M5.5 6v4M7.5 6v4M2.5 3.5l.6 7a.5.5 0 00.5.5h5.8a.5.5 0 00.5-.5l.6-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><div class="empty-state-title">No referrals tracked yet</div><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="openReferralModal()">Add First Referral</button></div>';
 }
 
 // ── CHARTS ──
@@ -1326,7 +1376,8 @@ async function saveReferral(){
     email:document.getElementById('rEmail').value.trim(),
     date:document.getElementById('rDate').value||null,
     status:document.getElementById('rStatus').value,
-    notes:document.getElementById('rNotes').value.trim()
+    notes:document.getElementById('rNotes').value.trim(),
+    logs:[]
   };
   const saved=await dbAddReferral(newRef);
   if(!saved)return;
@@ -1726,6 +1777,260 @@ async function openContactPicker(){
     }
   } else {
     showToast('Contact Picker not supported on this browser. Use VCF file import below.','');
+  }
+}
+
+// ── REFERRAL PROFILE ──
+function showReferralProfile(referralId){
+  const r = referrals.find(x=>String(x.id)===String(referralId));
+  if(!r) return;
+  navigate('referral-profile');
+  document.getElementById('topbarTitle').textContent = (r.first_name+' '+r.last_name).trim()||'Referral';
+
+  // Set back button to go back to wherever made sense
+  const backBtn = document.getElementById('refProfileBackBtn');
+  if(backBtn) backBtn.onclick = () => navigate('referrals');
+
+  const sourceContact = r.source_contact_id ? contacts.find(x=>String(x.id)===String(r.source_contact_id)) : null;
+  const avatarColors2 = ['#6b9e7a','#a19276','#5c85b8','#c9904a','#7a6e8f','#b85c5c'];
+  const avatarColor = avatarColors2[Math.abs((r.first_name||'').charCodeAt(0)||0) % avatarColors2.length];
+  const initials2 = ((r.first_name||'')[0]||'').toUpperCase() + ((r.last_name||'')[0]||'').toUpperCase();
+  const logs = r.logs||[];
+
+  document.getElementById('refProfileContent').innerHTML = `
+  <div class="profile-left">
+    <div class="profile-main-card">
+      <div class="profile-avatar" style="background:${avatarColor}">${initials2||'?'}</div>
+      <div class="profile-name">${r.first_name||''} ${r.last_name||''}</div>
+      <div class="profile-type">Referral ${r.source_name ? 'from '+r.source_name : ''}</div>
+      <div class="profile-tier-row">${statusBadge(r.status)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:13px">
+        <button class="act-btn" onclick="openRefInteractionLog('${r.id}','call')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2h2l.9 2.2-1.3 1.1A5.5 5.5 0 006.7 9.1l1.1-1.3 2.2.9V10a.7.7 0 01-.7.7A8.7 8.7 0 01.3 2.7.7.7 0 011 2z" stroke="currentColor" stroke-width="1.1"/></svg>Call</button>
+        <button class="act-btn" onclick="openRefInteractionLog('${r.id}','text')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".8" y=".8" width="9.4" height="7" rx="1.2" stroke="currentColor" stroke-width="1.1"/><path d="M3 9.5l1.5-1.7h3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Text</button>
+        <button class="act-btn" onclick="openRefInteractionLog('${r.id}','email')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".8" y="2" width="9.4" height="7" rx="1" stroke="currentColor" stroke-width="1.1"/><path d=".8 3l4.7 2.8 4.7-2.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Email</button>
+        <button class="act-btn" onclick="openEditReferral('${r.id}')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5l2-2 5-5a1 1 0 011.5 1.5l-5 5-2 2H1v-1.5z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Edit</button>
+        <button class="act-btn" onclick="deleteReferral('${r.id}',null)" style="color:var(--danger);border-color:rgba(184,92,92,0.3);grid-column:span 2"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 3h8M4 3V2a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M5 5v3.5M6 5v3.5M2.5 3l.5 6a.5.5 0 00.5.5h4a.5.5 0 00.5-.5l.5-6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Delete</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="quick-stat-row">
+        <div class="quick-stat"><div class="quick-stat-val">${logs.length}</div><div class="quick-stat-lbl">Touchpoints</div></div>
+        <div class="quick-stat"><div class="quick-stat-val">${logs.filter(l=>l.type==='call'&&l.outcome==='answered').length}</div><div class="quick-stat-lbl">Answered</div></div>
+        <div class="quick-stat"><div class="quick-stat-val">${logs.filter(l=>l.outcome==='unanswered').length}</div><div class="quick-stat-lbl">Missed</div></div>
+      </div>
+      ${sourceContact ? `
+      <div class="panel-title" style="margin-bottom:9px">Referred By</div>
+      <div class="mini-contact" style="cursor:pointer" onclick="showProfile('${sourceContact.id}')">
+        <div class="mini-av" style="background:${sourceContact.color}">${((sourceContact.first||'')[0]||'').toUpperCase()}${((sourceContact.last||'')[0]||'').toUpperCase()}</div>
+        <div>
+          <div class="mini-name">${sourceContact.first} ${sourceContact.last}</div>
+          <div class="mini-detail">${sourceContact.type} · ${sourceContact.tier}</div>
+        </div>
+        <div class="mini-action"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M4 2.5L9 6.5 4 10.5" stroke="var(--primary)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>` : ''}
+    </div>
+  </div>
+  <div class="profile-right">
+    <div class="panel">
+      <div class="info-section">
+        <div class="info-section-title">Contact Information</div>
+        <div class="info-grid">
+          <div class="info-item"><label>Phone</label><span>${r.phone||'<span class="empty">Not set</span>'}</span></div>
+          <div class="info-item"><label>Email</label><span>${r.email||'<span class="empty">Not set</span>'}</span></div>
+          <div class="info-item"><label>Date Referred</label><span>${fmtDate(r.date)}</span></div>
+          <div class="info-item"><label>Status</label><span>${statusBadge(r.status)}</span></div>
+          <div class="info-item"><label>Source</label><span>${r.source_name||'<span class="empty">Unknown</span>'}</span></div>
+        </div>
+      </div>
+      ${r.notes ? `<div class="info-section"><div class="info-section-title">Notes</div><div style="font-size:15px;color:var(--dark);white-space:pre-wrap">${r.notes}</div></div>` : ''}
+    </div>
+    <div class="panel">
+      <div class="panel-title">Activity Timeline</div>
+      <div id="refProfileTimeline">${renderRefTimeline(r)}</div>
+    </div>
+  </div>`;
+}
+
+function renderRefTimeline(r){
+  var logs = r.logs||[];
+  if(!logs.length) return '<div class="empty-state" style="padding:20px 0"><div class="empty-state-title" style="font-size:16px">No activity yet</div><div class="empty-state-sub">Use Call, Text, or Email to log interactions.</div></div>';
+  var typeMap = {call:'Call', text:'Text', email:'Email'};
+  var clsMap = {call:'int-call', text:'int-text', email:'int-email'};
+  return logs.map(function(log){
+    var outcomeStr = log.outcome ? ' - '+(log.outcome.charAt(0).toUpperCase()+log.outcome.slice(1)) : '';
+    var reminderStr = log.reminderDate ? ' - Reminder: '+fmtDate(log.reminderDate) : '';
+    return '<div class="interaction-log-item">'
+      + '<span class="int-type-badge '+(clsMap[log.type]||'int-call')+'">'+(typeMap[log.type]||log.type)+'</span>'
+      + '<div>'
+      + '<div class="int-detail">'+(log.notes||'No notes added.')+'</div>'
+      + '<div class="int-meta">'+fmtDate(log.date)+' '+(log.time||'')+outcomeStr+reminderStr+'</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+// ── REFERRAL INTERACTION LOG ──
+let currentRefInteractionId = null;
+function openRefInteractionLog(referralId, type){
+  currentRefInteractionId = referralId;
+  // Reuse the existing interaction modal but set context
+  currentInteractionContactId = null;
+  currentInteractionType = type;
+  currentInteractionOutcome = 'answered';
+  const titles = {call:'Log Call', text:'Log Text', email:'Log Email'};
+  const subs = {call:'Record details of this call.', text:'Record details of this text.', email:'Record details of this email.'};
+  document.getElementById('interactionTitle').textContent = titles[type];
+  document.getElementById('interactionSub').textContent = subs[type];
+  const now = new Date();
+  document.getElementById('intDate').value = now.toISOString().slice(0,10);
+  document.getElementById('intTime').value = now.toTimeString().slice(0,5);
+  document.getElementById('intNotes').value = '';
+  document.getElementById('intReminder').checked = false;
+  document.getElementById('intReminderDate').style.display = 'none';
+  document.getElementById('intOutcomeWrap').style.display = type==='call' ? 'block' : 'none';
+  document.getElementById('intReminderWrap').style.display = type==='call' ? 'block' : 'none';
+  setOutcome('answered');
+  document.getElementById('interactionOverlay').classList.add('open');
+}
+
+// Override saveInteraction to handle referral context
+const _origSaveInteraction = saveInteraction;
+saveInteraction = async function(){
+  if(currentRefInteractionId && !currentInteractionContactId){
+    // Saving to a referral
+    const referralId = currentRefInteractionId;
+    const type = currentInteractionType;
+    const date = document.getElementById('intDate').value;
+    const time = document.getElementById('intTime').value;
+    const notes = document.getElementById('intNotes').value.trim();
+    const outcome = type==='call' ? currentInteractionOutcome : null;
+    const reminder = document.getElementById('intReminder').checked;
+    const reminderDate = reminder ? document.getElementById('intReminderDate').value : null;
+    const log = {id:'log_'+Date.now(), type, date, time, outcome, notes, reminderDate, createdAt: new Date().toISOString()};
+    const ref = referrals.find(x=>String(x.id)===String(referralId));
+    if(!ref){ closeInteractionModal(); return; }
+    if(!ref.logs) ref.logs = [];
+    ref.logs.unshift(log);
+    if(SUPABASE_CONFIGURED && db){
+      try { await db.from('referrals').update({logs: ref.logs}).eq('id', referralId); }
+      catch(e){ console.warn('save ref log failed:', e); }
+    } else {
+      const stored = JSON.parse(localStorage.getItem('soihub_data')||'{}');
+      const idx = (stored.referrals||[]).findIndex(x=>String(x.id)===String(referralId));
+      if(idx>=0){ stored.referrals[idx]=ref; localStorage.setItem('soihub_data',JSON.stringify(stored)); }
+    }
+    closeInteractionModal();
+    showToast(type.charAt(0).toUpperCase()+type.slice(1)+' logged.','success');
+    showReferralProfile(referralId);
+    currentRefInteractionId = null;
+  } else {
+    currentRefInteractionId = null;
+    await _origSaveInteraction();
+  }
+};
+
+// ── EDIT REFERRAL ──
+function openEditReferral(referralId){
+  const r = referrals.find(x=>String(x.id)===String(referralId));
+  if(!r) return;
+  document.getElementById('editRefId').value = referralId;
+  document.getElementById('erFirst').value = r.first_name||'';
+  document.getElementById('erLast').value = r.last_name||'';
+  document.getElementById('erPhone').value = r.phone||'';
+  document.getElementById('erEmail').value = r.email||'';
+  document.getElementById('erDate').value = r.date||'';
+  document.getElementById('erStatus').value = r.status||'pending';
+  document.getElementById('erNotes').value = r.notes||'';
+  // Populate source dropdown
+  const sel = document.getElementById('erSource');
+  sel.innerHTML = '<option value="">— Select source contact —</option>' + contacts.map(c=>`<option value="${c.id}"${String(c.id)===String(r.source_contact_id)?'selected':''}>${c.first} ${c.last}</option>`).join('');
+  document.getElementById('erSourceName').value = r.source_name||'';
+  document.getElementById('editReferralOverlay').classList.add('open');
+}
+function closeEditReferral(){ document.getElementById('editReferralOverlay').classList.remove('open'); }
+function closeEditReferralOutside(e){ if(e.target===document.getElementById('editReferralOverlay')) closeEditReferral(); }
+
+async function saveEditReferral(){
+  const referralId = document.getElementById('editRefId').value;
+  const idx = referrals.findIndex(x=>String(x.id)===String(referralId));
+  if(idx<0){ showToast('Referral not found.','error'); return; }
+  const sourceContactId = document.getElementById('erSource').value||null;
+  const sourceContact = sourceContactId ? contacts.find(x=>String(x.id)===String(sourceContactId)) : null;
+  const sourceName = sourceContact ? (sourceContact.first+' '+sourceContact.last).trim() : document.getElementById('erSourceName').value.trim()||referrals[idx].source_name||'Unknown';
+  const updates = {
+    first_name: document.getElementById('erFirst').value.trim(),
+    last_name: document.getElementById('erLast').value.trim(),
+    phone: document.getElementById('erPhone').value.trim(),
+    email: document.getElementById('erEmail').value.trim(),
+    date: document.getElementById('erDate').value||null,
+    status: document.getElementById('erStatus').value,
+    notes: document.getElementById('erNotes').value.trim(),
+    source_contact_id: sourceContactId||null,
+    source_name: sourceName
+  };
+  referrals[idx] = {...referrals[idx], ...updates};
+  if(SUPABASE_CONFIGURED && db){
+    try { await db.from('referrals').update(updates).eq('id', referralId); }
+    catch(e){ console.warn('edit referral failed:', e); }
+  } else {
+    const stored = JSON.parse(localStorage.getItem('soihub_data')||'{}');
+    const si = (stored.referrals||[]).findIndex(x=>String(x.id)===String(referralId));
+    if(si>=0){ stored.referrals[si]=referrals[idx]; localStorage.setItem('soihub_data',JSON.stringify(stored)); }
+  }
+  closeEditReferral();
+  showToast('Referral updated.','success');
+  showReferralProfile(referralId);
+  updateDashboard();
+}
+
+// ── DELETE CONTACT ──
+async function deleteContact(contactId){
+  if(!confirm('Delete this contact? This cannot be undone.')) return;
+  const idx = contacts.findIndex(x=>String(x.id)===String(contactId));
+  if(idx < 0) return;
+  contacts.splice(idx, 1);
+  if(SUPABASE_CONFIGURED && db){
+    try {
+      // Also delete related referrals
+      await db.from('referrals').delete().eq('source_contact_id', contactId);
+      await db.from('contacts').delete().eq('id', contactId);
+    } catch(e){ console.warn('delete contact failed:', e); }
+  } else {
+    // Remove referrals linked to this contact from local storage
+    referrals = referrals.filter(r=>String(r.source_contact_id)!==String(contactId));
+    const stored = JSON.parse(localStorage.getItem('soihub_data')||'{}');
+    stored.contacts = contacts;
+    stored.referrals = referrals;
+    localStorage.setItem('soihub_data', JSON.stringify(stored));
+  }
+  showToast('Contact deleted.','success');
+  navigate('contacts');
+  updateDashboard();
+}
+
+// ── DELETE REFERRAL ──
+async function deleteReferral(referralId, sourceContactId){
+  if(!confirm('Delete this referral? This cannot be undone.')) return;
+  const idx = referrals.findIndex(x=>String(x.id)===String(referralId));
+  if(idx < 0) return;
+  referrals.splice(idx, 1);
+  if(SUPABASE_CONFIGURED && db){
+    try {
+      await db.from('referrals').delete().eq('id', referralId);
+    } catch(e){ console.warn('delete referral failed:', e); }
+  } else {
+    const stored = JSON.parse(localStorage.getItem('soihub_data')||'{}');
+    stored.referrals = referrals;
+    localStorage.setItem('soihub_data', JSON.stringify(stored));
+  }
+  showToast('Referral deleted.','success');
+  updateDashboard();
+  // Navigate based on which view is active
+  if(document.getElementById('view-referral-profile').classList.contains('active')){
+    navigate('referrals');
+  } else if(document.getElementById('view-referrals').classList.contains('active')){
+    updateReferralView();
+  } else if(sourceContactId){
+    showProfile(sourceContactId);
   }
 }
 
