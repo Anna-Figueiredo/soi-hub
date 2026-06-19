@@ -238,6 +238,16 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
 .toast{position:fixed;bottom:22px;right:22px;background:var(--dark);color:#fff;padding:11px 18px;border-radius:var(--radius-sm);font-size:15.5px;font-weight:500;box-shadow:var(--shadow-md);z-index:9999;transform:translateY(16px);opacity:0;transition:all 0.3s;pointer-events:none;}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.success{background:var(--success);}.toast.error{background:var(--danger);}
+.outcome-btn{padding:6px 13px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--bg2);color:var(--text-muted);cursor:pointer;transition:all 0.15s;font-family:'Barlow Semi Condensed',sans-serif;}
+.outcome-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.interaction-log-item{padding:11px 0;border-bottom:1px solid var(--border-light);display:flex;gap:11px;}
+.interaction-log-item:last-child{border-bottom:none;}
+.int-type-badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;flex-shrink:0;}
+.int-call{background:rgba(107,158,122,0.12);color:var(--success);}
+.int-text{background:rgba(92,133,184,0.12);color:var(--info);}
+.int-email{background:rgba(161,146,118,0.12);color:var(--primary-dark);}
+.int-detail{font-size:13px;color:var(--dark);line-height:1.4;}
+.int-meta{font-size:12px;color:var(--text-muted);margin-top:2px;}
 ::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 /* ── MOBILE & RESPONSIVE ── */
 .hamburger{display:none;width:36px;height:36px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-xs);cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-muted);}
@@ -643,6 +653,77 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
   </div>
 </div>
 
+<!-- INTERACTION LOG MODAL -->
+<div class="modal-overlay" id="interactionOverlay" onclick="closeInteractionOutside(event)">
+  <div class="modal modal-sm">
+    <div class="modal-title" id="interactionTitle">Log Call</div>
+    <div class="modal-sub" id="interactionSub">Record details of this interaction.</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input class="form-input" id="intDate" type="date"/></div>
+      <div class="form-group"><label>Time</label><input class="form-input" id="intTime" type="time"/></div>
+    </div>
+    <div class="form-group" id="intOutcomeWrap">
+      <label id="intOutcomeLabel">Outcome</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="outcome-btn active" id="outAnswered" onclick="setOutcome('answered')">Answered</button>
+        <button class="outcome-btn" id="outUnanswered" onclick="setOutcome('unanswered')">Unanswered</button>
+        <button class="outcome-btn" id="outLeftVM" onclick="setOutcome('voicemail')">Left VM</button>
+      </div>
+    </div>
+    <div class="form-group" id="intReminderWrap">
+      <label>Call Back Reminder</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+        <input type="checkbox" id="intReminder" style="width:16px;height:16px;accent-color:var(--primary)"/>
+        <input class="form-input" id="intReminderDate" type="date" style="flex:1;display:none" placeholder="Reminder date"/>
+      </div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea class="form-textarea" id="intNotes" placeholder="What was discussed…" style="min-height:80px"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeInteractionModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInteraction()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5l3 3 6-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save Log
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CONTACT MODAL -->
+<div class="modal-overlay" id="editContactOverlay" onclick="closeEditContactOutside(event)">
+  <div class="modal">
+    <div class="modal-title">Edit Contact</div>
+    <div class="modal-sub">Update this contact's information.</div>
+    <input type="hidden" id="editContactId"/>
+    <div class="form-section-label">Basic Information</div>
+    <div class="form-row"><div class="form-group"><label>First Name</label><input class="form-input" id="ecFirst" placeholder="Jane"/></div><div class="form-group"><label>Last Name</label><input class="form-input" id="ecLast" placeholder="Smith"/></div></div>
+    <div class="form-row"><div class="form-group"><label>Phone</label><input class="form-input" id="ecPhone" placeholder="(555) 000-0000"/></div><div class="form-group"><label>Email</label><input class="form-input" id="ecEmail" placeholder="jane@email.com"/></div></div>
+    <div class="form-group"><label>Address</label><input class="form-input" id="ecAddress" placeholder="123 Main St, City, State"/></div>
+    <div class="form-row"><div class="form-group"><label>Birthday</label><input class="form-input" id="ecBday" type="date"/></div><div class="form-group"><label>Spouse / Partner</label><input class="form-input" id="ecSpouse" placeholder="Partner's name"/></div></div>
+    <div class="form-section-label">Relationship Info</div>
+    <div class="form-row">
+      <div class="form-group"><label>Relationship Type</label><select class="form-select" id="ecType"><option>Past Client</option><option>Client</option><option>Friend</option><option>Family</option><option>Colleague</option><option>Acquaintance</option><option>Neighbor</option><option>Referral Partner</option><option>Service Provider</option></select></div>
+      <div class="form-group"><label>Tier</label><select class="form-select" id="ecTier"><option>A+</option><option>A</option><option>B</option><option>C</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label><select class="form-select" id="ecCategory"><option>General SOI</option><option>Buyer</option><option>Seller</option><option>Investor</option><option>Vendor</option><option>Personal</option></select></div>
+      <div class="form-group"><label>How You Met</label><input class="form-input" id="ecMet" placeholder="e.g. Open house, referral…"/></div>
+    </div>
+    <div class="form-section-label">Real Estate Info</div>
+    <div class="form-row">
+      <div class="form-group"><label>Homeowner Status</label><select class="form-select" id="ecOwner"><option>Owner</option><option>Renter</option><option>Unknown</option></select></div>
+      <div class="form-group"><label>Home Anniversary</label><input class="form-input" id="ecAnniv" type="date"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Market Updates</label><select class="form-select" id="ecMarket"><option>Yes</option><option>No</option></select></div>
+      <div class="form-group"><label>Holiday Cards</label><select class="form-select" id="ecHoliday"><option>Yes</option><option>No</option></select></div>
+    </div>
+    <div class="form-section-label">Notes</div>
+    <div class="form-group"><textarea class="form-textarea" id="ecNotes" placeholder="Personal details, family info, interests…"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeEditContact()">Cancel</button><button class="btn btn-primary" onclick="saveEditContact()">Save Changes</button></div>
+  </div>
+</div>
+
+
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
@@ -675,7 +756,16 @@ async function loadAccounts() {
     const { data, error } = await db.from('users').select('*');
     if (error) throw error;
     const map = {};
-    (data||[]).forEach(u => { map[u.username] = u; });
+    // Normalize snake_case DB columns back to camelCase for JS
+    (data||[]).forEach(row => {
+      map[row.username] = {
+        first: row.first || '',
+        last: row.last || '',
+        role: row.role || '',
+        avatar: row.avatar || null,
+        passwordHash: row.password_hash || row.passwordhash || row.passwordHash || ''
+      };
+    });
     setAccountsCache(map);
     return map;
   } catch(e) {
@@ -687,7 +777,16 @@ async function loadAccounts() {
 async function saveAccountToSupabase(username, profile) {
   if (!SUPABASE_CONFIGURED || !db) return;
   try {
-    const { error } = await db.from('users').upsert({ username, ...profile }, { onConflict: 'username' });
+    // Map camelCase JS to snake_case Postgres columns
+    const row = {
+      username,
+      first: profile.first || '',
+      last: profile.last || '',
+      role: profile.role || '',
+      avatar: profile.avatar || null,
+      password_hash: profile.passwordHash || ''
+    };
+    const { error } = await db.from('users').upsert(row, { onConflict: 'username' });
     if (error) throw error;
   } catch(e) { console.warn('saveAccount failed:', e); }
 }
@@ -795,7 +894,7 @@ async function doLogin(){
     errEl.textContent='Incorrect username or password.';errEl.style.display='block';return;
   }
   currentUser={username:u,...accounts[u]};
-  sessionStorage.setItem('soihub_session',JSON.stringify({username:u}));
+  localStorage.setItem('soihub_session',JSON.stringify({username:u}));
   await initApp();
 }
 async function doRegister(){
@@ -822,11 +921,11 @@ async function doRegister(){
   setAccountsCache(cache);
   await saveAccountToSupabase(u,newProfile);
   currentUser={username:u,...newProfile};
-  sessionStorage.setItem('soihub_session',JSON.stringify({username:u}));
+  localStorage.setItem('soihub_session',JSON.stringify({username:u}));
   await initApp();
 }
 function doLogout(){
-  sessionStorage.removeItem('soihub_session');
+  localStorage.removeItem('soihub_session');
   currentUser=null;contacts=[];referrals=[];
   document.getElementById('appShell').classList.remove('visible');
   document.getElementById('loginScreen').style.display='flex';
@@ -851,7 +950,7 @@ async function initApp(){
   navigate('dashboard');
 }
 window.addEventListener('DOMContentLoaded',async()=>{
-  const saved=sessionStorage.getItem('soihub_session');
+  const saved=localStorage.getItem('soihub_session');
   if(saved){
     try{
       const s=JSON.parse(saved);
@@ -979,7 +1078,7 @@ function renderContacts(){
   if(!list.length){
     grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;padding:48px 20px"><div class="empty-state-icon"><svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="11" r="6.5" stroke="#a8a49f" stroke-width="1.5"/><path d="M4 30c0-7.18 5.82-13 13-13s13 5.82 13 13" stroke="#a8a49f" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="empty-state-title">${contacts.length===0?'No contacts yet':'No contacts match'}</div><div class="empty-state-sub">${contacts.length===0?'Add your first contact.':'Try a different filter.'}</div>${contacts.length===0?'<button class="btn btn-primary" onclick="openModal()">Add Contact</button>':''}</div>`;
   } else {
-    grid.innerHTML=list.map(c=>{const rc=referrals.filter(r=>r.source_contact_id===c.id).length;return`<div class="contact-card" onclick="showProfile('${c.id}')"><span class="contact-tier-badge ${tierClass(c.tier)}">${c.tier}</span><div class="contact-card-header"><div class="contact-av-lg" style="background:${c.color}">${initials(c)}</div><div><div class="contact-name">${c.first} ${c.last}</div><div class="contact-type">${c.type} · ${c.category}</div></div></div>${c.phone?`<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2h2l.9 2.2-1.3 1.1A5.8 5.8 0 006.7 9l1.1-1.3L10 8.6v1.8a.8.8 0 01-.8.8A8.8 8.8 0 011.2 2.8.8.8 0 012 2z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> ${c.phone}</div>`:''}<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.2" stroke="currentColor" stroke-width="1.1"/><path d="M5.5 3.5v2.2l1.5 1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> ${c.last_contact?c.last_contact+' days ago':'<span style="color:var(--danger)">Never contacted</span>'}</div>${rc>0?`<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1l1.3 2.6 2.9.42-2.1 2.04.5 2.88L5.5 7.8 3.1 9.14l.5-2.88L1.5 4.16l2.9-.42z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg> ${rc} referral${rc!==1?'s':''}</div>`:''}<div class="contact-actions"><div class="act-btn">Call</div><div class="act-btn">Text</div><div class="act-btn">Email</div><div class="act-btn" onclick="event.stopPropagation();openRefModalForContact('${c.id}')"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Referral</div></div></div>`;}).join('');
+    grid.innerHTML=list.map(c=>{const rc=referrals.filter(r=>r.source_contact_id===c.id).length;return`<div class="contact-card" onclick="showProfile('${c.id}')"><span class="contact-tier-badge ${tierClass(c.tier)}">${c.tier}</span><div class="contact-card-header"><div class="contact-av-lg" style="background:${c.color}">${initials(c)}</div><div><div class="contact-name">${c.first} ${c.last}</div><div class="contact-type">${c.type} · ${c.category}</div></div></div>${c.phone?`<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2h2l.9 2.2-1.3 1.1A5.8 5.8 0 006.7 9l1.1-1.3L10 8.6v1.8a.8.8 0 01-.8.8A8.8 8.8 0 011.2 2.8.8.8 0 012 2z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> ${c.phone}</div>`:''}<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.2" stroke="currentColor" stroke-width="1.1"/><path d="M5.5 3.5v2.2l1.5 1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> ${c.last_contact?c.last_contact+' days ago':'<span style="color:var(--danger)">Never contacted</span>'}</div>${rc>0?`<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1l1.3 2.6 2.9.42-2.1 2.04.5 2.88L5.5 7.8 3.1 9.14l.5-2.88L1.5 4.16l2.9-.42z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg> ${rc} referral${rc!==1?'s':''}</div>`:''}<div class="contact-actions"><div class="act-btn" onclick="event.stopPropagation();openInteractionLog('${c.id}','call')">Call</div><div class="act-btn" onclick="event.stopPropagation();openInteractionLog('${c.id}','text')">Text</div><div class="act-btn" onclick="event.stopPropagation();openInteractionLog('${c.id}','email')">Email</div><div class="act-btn" onclick="event.stopPropagation();openRefModalForContact('${c.id}')"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Referral</div></div></div>`;}).join('');
   }
   const table=document.getElementById('contactsTable');
   table.innerHTML=`<thead><tr><th>Name</th><th>Type</th><th>Tier</th><th>Phone</th><th>Email</th><th>Last Contact</th><th>Referrals</th></tr></thead><tbody>${list.length?list.map(c=>{const rc=referrals.filter(r=>r.source_contact_id===c.id).length;return`<tr onclick="showProfile('${c.id}')"><td><div style="display:flex;align-items:center;gap:7px"><div class="mini-av" style="background:${c.color};width:26px;height:26px;font-size:13px">${initials(c)}</div>${c.first} ${c.last}</div></td><td style="color:var(--text-muted)">${c.type}</td><td><span class="mini-tag ${tierClass(c.tier)}">${c.tier}</span></td><td>${c.phone||'—'}</td><td>${c.email||'—'}</td><td>${c.last_contact?c.last_contact+' days ago':'<span style="color:var(--danger);font-weight:500">Never</span>'}</td><td>${rc}</td></tr>`;}).join(''):`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">No contacts match.</td></tr>`}</tbody>`;
@@ -1000,7 +1099,7 @@ function showProfile(id){
       <div class="profile-name">${c.first} ${c.last}</div>
       <div class="profile-type">${c.type} · ${c.category}</div>
       <div class="profile-tier-row"><span class="mini-tag ${tierClass(c.tier)}">${c.tier} Tier</span>${cRefs.length>0?`<span class="mini-tag badge-green">${cRefs.length} Referral${cRefs.length!==1?'s':''}</span>`:''}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:13px"><button class="act-btn">Call</button><button class="act-btn">Text</button><button class="act-btn">Email</button><button class="act-btn">Log Note</button></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:13px"><button class="act-btn" onclick="openInteractionLog('${c.id}','call')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2h2l.9 2.2-1.3 1.1A5.5 5.5 0 006.7 9.1l1.1-1.3 2.2.9V10a.7.7 0 01-.7.7A8.7 8.7 0 01.3 2.7.7.7 0 011 2z" stroke="currentColor" stroke-width="1.1"/></svg>Call</button><button class="act-btn" onclick="openInteractionLog('${c.id}','text')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".8" y=".8" width="9.4" height="7" rx="1.2" stroke="currentColor" stroke-width="1.1"/><path d="M3 9.5l1.5-1.7h3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Text</button><button class="act-btn" onclick="openInteractionLog('${c.id}','email')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".8" y="2" width="9.4" height="7" rx="1" stroke="currentColor" stroke-width="1.1"/><path d=".8 3l4.7 2.8 4.7-2.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Email</button><button class="act-btn" onclick="openEditContact('${c.id}')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5l2-2 5-5a1 1 0 011.5 1.5l-5 5-2 2H1v-1.5z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Edit</button></div>
     </div>
     <div class="panel">
       <div class="quick-stat-row">
@@ -1046,10 +1145,30 @@ function showProfile(id){
       </div>
       ${refListHtml}
     </div>
-    <div class="panel"><div class="panel-title">Activity Timeline</div><div class="empty-state" style="padding:24px 0"><div class="empty-state-title" style="font-size:18px">No activity logged yet</div><div class="empty-state-sub">Use the buttons above to log calls, texts, or notes.</div></div></div>
+    <div class="panel"><div class="panel-title">Activity Timeline</div><div id="profileTimeline">${renderTimeline(cRefs,c)}</div></div>
   </div>`;
 }
 
+// ── TIMELINE HELPER ──
+function renderTimeline(cRefs, contact){
+  var logs = contact.logs||[];
+  if(!logs.length) return '<div class="empty-state" style="padding:20px 0"><div class="empty-state-title" style="font-size:16px">No activity yet</div><div class="empty-state-sub">Use Call, Text, or Email to log interactions.</div></div>';
+  var typeMap = {call:'Call', text:'Text', email:'Email'};
+  var clsMap = {call:'int-call', text:'int-text', email:'int-email'};
+  return logs.map(function(log){
+    var outcomeStr = log.outcome ? ' - '+(log.outcome.charAt(0).toUpperCase()+log.outcome.slice(1)) : '';
+    var reminderStr = log.reminderDate ? ' - Reminder: '+fmtDate(log.reminderDate) : '';
+    var notesTxt = log.notes || 'No notes added.';
+    var typeLbl = typeMap[log.type] || log.type;
+    var typeCls = clsMap[log.type] || 'int-call';
+    return '<div class="interaction-log-item">'
+      + '<span class="int-type-badge ' + typeCls + '">' + typeLbl + '</span>'
+      + '<div>'
+      + '<div class="int-detail">' + notesTxt + '</div>'
+      + '<div class="int-meta">' + fmtDate(log.date) + ' ' + (log.time||'') + outcomeStr + reminderStr + '</div>'
+      + '</div></div>';
+  }).join('');
+}
 // ── FOLLOW-UP ──
 function renderFollowUp(key){
   const now=new Date();let list=[];
@@ -1377,7 +1496,7 @@ async function saveProfile(){
   // If username changed, delete old and create new
   if(newUsername!==currentUser.username){
     await deleteAccountFromSupabase(currentUser.username);
-    sessionStorage.setItem('soihub_session',JSON.stringify({username:newUsername}));
+    localStorage.setItem('soihub_session',JSON.stringify({username:newUsername}));
   }
   const updatedProfile={...accounts[currentUser.username],first,last,role:role||'Licensed Realtor'};
   await saveAccountToSupabase(newUsername,updatedProfile);
@@ -1436,6 +1555,178 @@ async function confirmDeleteAccount(){
   setAccountsCache(cache);
   doLogout();
   showToast('Account deleted.','');
+}
+
+// ── INTERACTION LOG ──
+let currentInteractionContactId = null;
+let currentInteractionType = null;
+let currentInteractionOutcome = 'answered';
+
+function openInteractionLog(contactId, type){
+  currentInteractionContactId = contactId;
+  currentInteractionType = type;
+  currentInteractionOutcome = 'answered';
+  const titles = {call:'Log Call', text:'Log Text', email:'Log Email'};
+  const subs = {call:'Record details of this call.', text:'Record details of this text.', email:'Record details of this email.'};
+  document.getElementById('interactionTitle').textContent = titles[type];
+  document.getElementById('interactionSub').textContent = subs[type];
+  // Date/time defaults to now
+  const now = new Date();
+  document.getElementById('intDate').value = now.toISOString().slice(0,10);
+  document.getElementById('intTime').value = now.toTimeString().slice(0,5);
+  document.getElementById('intNotes').value = '';
+  document.getElementById('intReminder').checked = false;
+  document.getElementById('intReminderDate').style.display = 'none';
+  // Show/hide outcome for call only
+  const outcomeWrap = document.getElementById('intOutcomeWrap');
+  const reminderWrap = document.getElementById('intReminderWrap');
+  outcomeWrap.style.display = type==='call' ? 'block' : 'none';
+  reminderWrap.style.display = type==='call' ? 'block' : 'none';
+  setOutcome('answered');
+  document.getElementById('interactionOverlay').classList.add('open');
+}
+function setOutcome(outcome){
+  currentInteractionOutcome = outcome;
+  ['answered','unanswered','voicemail'].forEach(o=>{
+    const btn = document.getElementById('out'+o.charAt(0).toUpperCase()+o.slice(1));
+    if(btn) btn.classList.toggle('active', o===outcome);
+  });
+}
+function closeInteractionModal(){ document.getElementById('interactionOverlay').classList.remove('open'); }
+function closeInteractionOutside(e){ if(e.target===document.getElementById('interactionOverlay')) closeInteractionModal(); }
+
+async function saveInteraction(){
+  const contactId = currentInteractionContactId;
+  const type = currentInteractionType;
+  const date = document.getElementById('intDate').value;
+  const time = document.getElementById('intTime').value;
+  const notes = document.getElementById('intNotes').value.trim();
+  const outcome = type==='call' ? currentInteractionOutcome : null;
+  const reminder = document.getElementById('intReminder').checked;
+  const reminderDate = reminder ? document.getElementById('intReminderDate').value : null;
+  const log = { id:'log_'+Date.now(), type, date, time, outcome, notes, reminderDate, createdAt: new Date().toISOString() };
+  // Find contact and add log
+  const contact = contacts.find(c=>String(c.id)===String(contactId));
+  if(!contact){ closeInteractionModal(); return; }
+  if(!contact.logs) contact.logs = [];
+  contact.logs.unshift(log);
+  // Update last_contact days to 0
+  contact.last_contact = 0;
+  // Save to Supabase
+  if(SUPABASE_CONFIGURED && db){
+    try {
+      await db.from('contacts').update({ logs: contact.logs, last_contact: 0 }).eq('id', contactId);
+    } catch(e){ console.warn('save log failed:', e); }
+  } else {
+    const stored = JSON.parse(localStorage.getItem('soihub_data')||'{}');
+    const idx = (stored.contacts||[]).findIndex(x=>String(x.id)===String(contactId));
+    if(idx>=0){ stored.contacts[idx]=contact; localStorage.setItem('soihub_data',JSON.stringify(stored)); }
+  }
+  closeInteractionModal();
+  showToast(type.charAt(0).toUpperCase()+type.slice(1)+' logged.','success');
+  // Refresh profile if open
+  if(document.getElementById('view-profile').classList.contains('active')) showProfile(contactId);
+  updateDashboard();
+}
+
+// Toggle reminder date
+document.addEventListener('change', function(e){
+  if(e.target && e.target.id==='intReminder'){
+    document.getElementById('intReminderDate').style.display = e.target.checked ? 'block' : 'none';
+  }
+});
+
+// ── EDIT CONTACT ──
+function openEditContact(contactId){
+  const contact = contacts.find(c=>String(c.id)===String(contactId));
+  if(!contact) return;
+  document.getElementById('editContactId').value = contactId;
+  document.getElementById('ecFirst').value = contact.first||'';
+  document.getElementById('ecLast').value = contact.last||'';
+  document.getElementById('ecPhone').value = contact.phone||'';
+  document.getElementById('ecEmail').value = contact.email||'';
+  document.getElementById('ecAddress').value = contact.address||'';
+  document.getElementById('ecBday').value = contact.bday||'';
+  document.getElementById('ecSpouse').value = contact.spouse||'';
+  document.getElementById('ecType').value = contact.type||'Past Client';
+  document.getElementById('ecTier').value = contact.tier||'B';
+  document.getElementById('ecCategory').value = contact.category||'General SOI';
+  document.getElementById('ecMet').value = contact.met||'';
+  document.getElementById('ecOwner').value = contact.owner||'Owner';
+  document.getElementById('ecAnniv').value = contact.anniv||'';
+  document.getElementById('ecMarket').value = contact.market||'No';
+  document.getElementById('ecHoliday').value = contact.holiday||'No';
+  document.getElementById('ecNotes').value = contact.notes||'';
+  document.getElementById('editContactOverlay').classList.add('open');
+}
+function closeEditContact(){ document.getElementById('editContactOverlay').classList.remove('open'); }
+function closeEditContactOutside(e){ if(e.target===document.getElementById('editContactOverlay')) closeEditContact(); }
+
+async function saveEditContact(){
+  const contactId = document.getElementById('editContactId').value;
+  const idx = contacts.findIndex(c=>String(c.id)===String(contactId));
+  if(idx<0){ showToast('Contact not found.','error'); return; }
+  const updates = {
+    first: document.getElementById('ecFirst').value.trim()||'—',
+    last: document.getElementById('ecLast').value.trim()||'',
+    phone: document.getElementById('ecPhone').value.trim(),
+    email: document.getElementById('ecEmail').value.trim(),
+    address: document.getElementById('ecAddress').value.trim(),
+    bday: document.getElementById('ecBday').value||null,
+    spouse: document.getElementById('ecSpouse').value.trim(),
+    type: document.getElementById('ecType').value,
+    tier: document.getElementById('ecTier').value,
+    category: document.getElementById('ecCategory').value,
+    met: document.getElementById('ecMet').value.trim(),
+    owner: document.getElementById('ecOwner').value,
+    anniv: document.getElementById('ecAnniv').value||null,
+    market: document.getElementById('ecMarket').value,
+    holiday: document.getElementById('ecHoliday').value,
+    notes: document.getElementById('ecNotes').value.trim()
+  };
+  contacts[idx] = {...contacts[idx], ...updates};
+  if(SUPABASE_CONFIGURED && db){
+    try { await db.from('contacts').update(updates).eq('id', contactId); }
+    catch(e){ console.warn('edit contact failed:', e); }
+  } else {
+    const stored = JSON.parse(localStorage.getItem('soihub_data')||'{}');
+    const si = (stored.contacts||[]).findIndex(x=>String(x.id)===String(contactId));
+    if(si>=0){ stored.contacts[si]=contacts[idx]; localStorage.setItem('soihub_data',JSON.stringify(stored)); }
+  }
+  closeEditContact();
+  showToast('Contact updated.','success');
+  showProfile(contactId);
+  updateDashboard();
+}
+
+// ── IPHONE CONTACT PICKER ──
+async function openContactPicker(){
+  if('contacts' in navigator && 'ContactsManager' in window){
+    try{
+      const props=['name','tel','email','address'];
+      const contacts_picked = await navigator.contacts.select(props, {multiple:true});
+      let imported=0;
+      for(const cp of contacts_picked){
+        const nameParts = (cp.name?.[0]||'').trim().split(' ');
+        const first = nameParts[0]||'';
+        const last = nameParts.slice(1).join(' ')||'';
+        if(!first&&!last) continue;
+        const phone = cp.tel?.[0]||'';
+        const email = cp.email?.[0]||'';
+        const address = cp.address?.[0] ? [cp.address[0].addressLine?.[0],cp.address[0].city,cp.address[0].region].filter(Boolean).join(', ') : '';
+        const saved = await dbAddContact({first,last,phone,email,address,type:'Acquaintance',tier:'B',category:'General SOI',market:'No',holiday:'No',last_contact:null,color:colorFor(contacts.length)});
+        if(saved){if(SUPABASE_CONFIGURED&&db)contacts.push(saved);imported++;}
+      }
+      closeModal();updateDashboard();
+      showToast(imported+' contact'+(imported!==1?'s':'')+' imported.','success');
+      navigate('contacts');
+    } catch(e){
+      console.warn('Contact Picker failed:',e);
+      showToast('Contact picker not available. Use VCF file import.','error');
+    }
+  } else {
+    showToast('Contact Picker not supported on this browser. Use VCF file import below.','');
+  }
 }
 
 function downloadReport(format){
