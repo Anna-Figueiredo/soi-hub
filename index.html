@@ -2,12 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SOI Hub">
+<meta name="theme-color" content="#252526">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23252526'/><rect x='28' y='28' width='44' height='44' rx='10' fill='%23a19276'/><circle cx='50' cy='42' r='9' fill='%23fff'/><path d='M32 72c0-9.94 8.06-18 18-18h0c9.94 0 18 8.06 18 18' stroke='%23fff' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
 <title>SOI Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{--primary:#a19276;--primary-light:#c4b09a;--primary-dark:#7d7059;--dark:#252526;--bg:#faf8f5;--bg2:#f5f1eb;--bg3:#ede8df;--card:#ffffff;--text:#252526;--text-muted:#7a7672;--text-light:#a8a49f;--border:#e8e2d9;--border-light:#f0ebe3;--success:#6b9e7a;--warning:#c9904a;--danger:#b85c5c;--info:#5c85b8;--radius:16px;--radius-sm:10px;--radius-xs:6px;--shadow:0 2px 16px rgba(37,37,38,0.06);--shadow-md:0 4px 24px rgba(37,37,38,0.1);--sidebar-w:240px;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -233,7 +239,57 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.success{background:var(--success);}.toast.error{background:var(--danger);}
 ::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-@media(max-width:1100px){.stat-grid,.ref-metrics{grid-template-columns:repeat(2,1fr);}.tier-grid{grid-template-columns:repeat(4,1fr);}.profile-wrap{grid-template-columns:1fr;}.charts-grid{grid-template-columns:1fr;}}
+/* MOBILE */
+.hamburger{display:none;width:38px;height:38px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-xs);cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;backdrop-filter:blur(2px);}
+.sidebar-overlay.open{display:block;}
+@media(max-width:1100px){
+  .stat-grid,.ref-metrics{grid-template-columns:repeat(2,1fr);}
+  .tier-grid{grid-template-columns:repeat(4,1fr);}
+  .profile-wrap{grid-template-columns:1fr;}
+  .charts-grid{grid-template-columns:1fr;}
+  .dash-row,.dash-row-3,.reports-grid,.ai-grid{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  :root{--sidebar-w:260px;}
+  .sidebar{transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);z-index:200;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .hamburger{display:flex;}
+  .topbar{padding:12px 16px;gap:10px;}
+  .topbar-search{display:none;}
+  .topbar-right{gap:6px;}
+  .topbar-right .btn-ghost{display:none;}
+  .topbar-title{font-size:18px;}
+  .page-content{padding:16px;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .tier-grid{grid-template-columns:repeat(4,1fr);gap:7px;}
+  .tier-card{padding:10px 6px;}
+  .tier-value{font-size:22px;}
+  .dash-row,.dash-row-3,.reports-grid,.ai-grid,.ref-metrics{grid-template-columns:1fr;gap:12px;}
+  .charts-grid{grid-template-columns:1fr;}
+  .profile-wrap{grid-template-columns:1fr;}
+  .contacts-toolbar{gap:6px;}
+  .filter-chip{display:none;}
+  .filter-chip.active{display:inline-flex;}
+  .contacts-grid{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .modal{padding:20px;max-height:95vh;}
+  .fu-item{flex-wrap:wrap;gap:8px;}
+  .fu-actions{width:100%;justify-content:flex-end;}
+  .ref-table-wrap{overflow-x:auto;}
+  .back-btn{margin-bottom:12px;}
+  .reports-toolbar{flex-wrap:wrap;justify-content:flex-start;}
+  .login-card{padding:24px 18px;}
+  .page-content{padding-bottom:32px;}
+  /* safe area for notched phones */
+  .topbar{padding-top:max(12px, env(safe-area-inset-top));}
+}
+@media(max-width:400px){
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .tier-grid{grid-template-columns:repeat(4,1fr);}
+  .contact-actions .act-btn:nth-child(n+4){display:none;}
+}
 </style>
 </head>
 <body>
@@ -266,6 +322,9 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
   </div>
 </div>
 
+<div id="loadingBar" style="display:none;position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--primary-light));z-index:9999;animation:loadpulse 1.2s ease-in-out infinite;"></div>
+<style>@keyframes loadpulse{0%{opacity:1}50%{opacity:0.4}100%{opacity:1}}</style>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <div id="appShell">
   <nav class="sidebar">
     <div class="sidebar-logo"><div class="logo-mark"><div class="logo-icon"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><circle cx="8.5" cy="5.5" r="3" stroke="#fff" stroke-width="1.5"/><path d="M2 15c0-3.6 2.91-6.5 6.5-6.5S15 11.4 15 15" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div><div><div>SOI Hub</div><div class="logo-sub">Sphere of Influence</div></div></div></div>
@@ -433,7 +492,7 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
     <div class="form-group"><label>Address</label><input class="form-input" id="fAddress" placeholder="123 Main St, City, State 00000"/></div>
     <div class="form-row"><div class="form-group"><label>Birthday</label><input class="form-input" id="fBday" type="date"/></div><div class="form-group"><label>Spouse / Partner</label><input class="form-input" id="fSpouse" placeholder="Partner's name"/></div></div>
     <div class="form-section-label">Relationship Info</div>
-    <div class="form-row"><div class="form-group"><label>Relationship Type</label><select class="form-select" id="fType"><option>Past Client</option><option>Friend</option><option>Family</option><option>Neighbor</option><option>Coworker</option><option>Referral Partner</option><option>Vendor</option><option>Other</option></select></div><div class="form-group"><label>Tier</label><select class="form-select" id="fTier"><option>A+</option><option>A</option><option>B</option><option>C</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label>Relationship Type</label><select class="form-select" id="fType"><option>Past Client</option><option>Client</option><option>Friend</option><option>Family</option><option>Colleague</option><option>Acquaintance</option><option>Neighbor</option><option>Referral Partner</option><option>Service Provider</option></select></div><div class="form-group"><label>Tier</label><select class="form-select" id="fTier"><option>A+</option><option>A</option><option>B</option><option>C</option></select></div></div>
     <div class="form-row"><div class="form-group"><label>Category</label><select class="form-select" id="fCategory"><option>General SOI</option><option>Buyer</option><option>Seller</option><option>Investor</option><option>Vendor</option><option>Personal</option></select></div><div class="form-group"><label>How You Met</label><input class="form-input" id="fMet" placeholder="e.g. Open house, referral…"/></div></div>
     <div class="form-section-label">Real Estate Info</div>
     <div class="form-row"><div class="form-group"><label>Homeowner Status</label><select class="form-select" id="fOwner"><option>Owner</option><option>Renter</option><option>Unknown</option></select></div><div class="form-group"><label>Home Anniversary</label><input class="form-input" id="fAnniv" type="date"/></div></div>
@@ -474,6 +533,27 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
+// ══════════════════════════════════════════════
+//  CONFIG — paste your Supabase values here
+// ══════════════════════════════════════════════
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const APP_USERNAME = 'admin';   // your login username
+const APP_PASSWORD = 'changeme'; // your login password
+// ══════════════════════════════════════════════
+
+// Safe Supabase init — falls back to localStorage if not configured
+const SUPABASE_CONFIGURED = SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
+let db = null;
+if (SUPABASE_CONFIGURED) {
+  try {
+    const { createClient } = supabase;
+    db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch(e) {
+    console.warn('Supabase init failed, using localStorage fallback:', e);
+  }
+}
+
 // UTILS
 const avatarColors=['#6b9e7a','#a19276','#5c85b8','#c9904a','#7a6e8f','#b85c5c','#6b8e9e','#9e8c6b','#8e6b9e','#6b9e8c'];
 const colorFor=i=>avatarColors[i%avatarColors.length];
@@ -482,14 +562,74 @@ const tierClass=t=>t==='A+'?'tier-ap':t==='A'?'tier-a':t==='B'?'tier-b':'tier-c'
 const statusBadge=s=>s==='closed'?'<span class="status-closed">Closed</span>':s==='lost'?'<span class="status-lost">Lost</span>':'<span class="status-pending">Pending</span>';
 function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(()=>{t.className='toast';},3200);}
 function fmtDate(d){if(!d)return'—';try{return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch(e){return d;}}
+function showLoading(show){const el=document.getElementById('loadingBar');if(el)el.style.display=show?'block':'none';}
 
-// AUTH
-let currentUser=null;
-function getUsersDB(){try{return JSON.parse(localStorage.getItem('soihub_users')||'{}');}catch(e){return{};}}
-function saveUsersDB(db){localStorage.setItem('soihub_users',JSON.stringify(db));}
-function getUserData(u){try{return JSON.parse(localStorage.getItem('soihub_data_'+u)||'{"contacts":[],"referrals":[]}');}catch(e){return{contacts:[],referrals:[]};}}
-function saveUserData(u,d){localStorage.setItem('soihub_data_'+u,JSON.stringify(d));}
+// DATA
+let contacts=[];let referrals=[];let currentFilter='all';let bulkParsed=[];let editRefContactId=null;
 
+// ── SUPABASE CRUD ──
+async function loadAllData(){
+  showLoading(true);
+  if (!SUPABASE_CONFIGURED || !db) {
+    // localStorage fallback
+    try {
+      const stored = JSON.parse(localStorage.getItem('soihub_data') || '{}');
+      contacts = (stored.contacts || []).map((r,i) => ({...r, color: r.color || colorFor(i)}));
+      referrals = stored.referrals || [];
+    } catch(e) { contacts=[]; referrals=[]; }
+    showLoading(false);
+    return;
+  }
+  try {
+    const [{data:cData,error:ce},{data:rData,error:re}] = await Promise.all([
+      db.from('contacts').select('*').order('created_at',{ascending:true}),
+      db.from('referrals').select('*').order('created_at',{ascending:true})
+    ]);
+    if(ce) throw ce;
+    if(re) throw re;
+    contacts = (cData||[]).map(r=>({...r, color: r.color||colorFor(Math.random()*10)}));
+    referrals = rData||[];
+  } catch(e){
+    console.error('Load error',e);
+    showToast('Could not load data — check Supabase config.','error');
+    contacts=[]; referrals=[];
+  }
+  showLoading(false);
+}
+
+async function dbAddContact(newC){
+  if (!SUPABASE_CONFIGURED || !db) {
+    const saved = {...newC, id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2)};
+    contacts.push(saved);
+    localStorage.setItem('soihub_data', JSON.stringify({contacts, referrals}));
+    return saved;
+  }
+  const {data,error}=await db.from('contacts').insert([newC]).select().single();
+  if(error){showToast('Save failed: '+error.message,'error');return null;}
+  return data;
+}
+async function dbUpdateContact(id,updates){
+  if (!SUPABASE_CONFIGURED || !db) {
+    const idx = contacts.findIndex(c=>String(c.id)===String(id));
+    if(idx>=0){ contacts[idx]={...contacts[idx],...updates}; localStorage.setItem('soihub_data',JSON.stringify({contacts,referrals})); }
+    return;
+  }
+  const {error}=await db.from('contacts').update(updates).eq('id',id);
+  if(error)showToast('Update failed','error');
+}
+async function dbAddReferral(newR){
+  if (!SUPABASE_CONFIGURED || !db) {
+    const saved = {...newR, id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2)};
+    referrals.push(saved);
+    localStorage.setItem('soihub_data', JSON.stringify({contacts, referrals}));
+    return saved;
+  }
+  const {data,error}=await db.from('referrals').insert([newR]).select().single();
+  if(error){showToast('Save failed: '+error.message,'error');return null;}
+  return data;
+}
+
+// ── AUTH ──
 function switchAuthTab(tab){
   document.querySelectorAll('.login-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
   document.getElementById('loginForm').style.display=tab==='login'?'block':'none';
@@ -497,17 +637,16 @@ function switchAuthTab(tab){
   document.getElementById('loginErr').style.display='none';
   document.getElementById('regErr').style.display='none';
 }
-function doLogin(){
+async function doLogin(){
   const u=document.getElementById('loginUser').value.trim().toLowerCase();
   const p=document.getElementById('loginPass').value;
-  const db=getUsersDB();
-  if(!db[u]||db[u].password!==btoa(p)){document.getElementById('loginErr').style.display='block';return;}
-  document.getElementById('loginErr').style.display='none';
-  currentUser={username:u,...db[u]};
-  const d=getUserData(u);contacts=d.contacts||[];referrals=d.referrals||[];
-  initApp();
+  const errEl=document.getElementById('loginErr');
+  if(u!==APP_USERNAME.toLowerCase()||p!==APP_PASSWORD){errEl.style.display='block';return;}
+  errEl.style.display='none';
+  sessionStorage.setItem('soihub_auth','1');
+  await initApp();
 }
-function doRegister(){
+async function doRegister(){
   const first=document.getElementById('regFirst').value.trim();
   const last=document.getElementById('regLast').value.trim();
   const u=document.getElementById('regUser').value.trim().toLowerCase();
@@ -517,42 +656,49 @@ function doRegister(){
   const e=document.getElementById('regErr');
   if(!u||!p){e.textContent='Username and password required.';e.style.display='block';return;}
   if(p!==p2){e.textContent='Passwords do not match.';e.style.display='block';return;}
-  const db=getUsersDB();
-  if(db[u]){e.textContent='Username already taken.';e.style.display='block';return;}
-  db[u]={first,last,role:role||'Licensed Realtor',password:btoa(p)};
-  saveUsersDB(db);e.style.display='none';
-  currentUser={username:u,...db[u]};contacts=[];referrals=[];
-  initApp();
+  // For single-user app, just validate matches config
+  if(u!==APP_USERNAME.toLowerCase()||p!==APP_PASSWORD){e.textContent='Registration is disabled. Use the configured credentials.';e.style.display='block';return;}
+  sessionStorage.setItem('soihub_auth','1');
+  await initApp();
 }
 function doLogout(){
-  if(currentUser)saveUserData(currentUser.username,{contacts,referrals});
-  currentUser=null;contacts=[];referrals=[];
+  sessionStorage.removeItem('soihub_auth');
+  contacts=[];referrals=[];
   document.getElementById('appShell').classList.remove('visible');
   document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
   destroyCharts();
 }
-function initApp(){
+async function initApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appShell').classList.add('visible');
-  const name=[currentUser.first,currentUser.last].filter(Boolean).join(' ')||currentUser.username;
-  document.getElementById('sidebarName').textContent=name;
-  document.getElementById('sidebarRole').textContent=currentUser.role||'Realtor';
-  document.getElementById('sidebarAvatar').textContent=((currentUser.first||currentUser.username||'')[0]||'').toUpperCase()+((currentUser.last||'')[0]||'').toUpperCase();
+  document.getElementById('sidebarName').textContent=APP_USERNAME;
+  document.getElementById('sidebarRole').textContent='Licensed Realtor';
+  document.getElementById('sidebarAvatar').textContent=APP_USERNAME.slice(0,2).toUpperCase();
+  if (!SUPABASE_CONFIGURED) {
+    showToast('Running in local mode — add Supabase config to enable cloud sync.','');
+  }
+  await loadAllData();
   const now=new Date();
   document.getElementById('dashDate').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+(contacts.length?' · '+contacts.length+' contact'+(contacts.length!==1?'s':'')+' in your SOI.':' · Add your first contact to get started.');
   navigate('dashboard');
 }
-window.addEventListener('DOMContentLoaded',()=>{
-  const saved=localStorage.getItem('soihub_session');
-  if(saved){try{const s=JSON.parse(saved);const db=getUsersDB();if(db[s.username]){currentUser={username:s.username,...db[s.username]};const d=getUserData(s.username);contacts=d.contacts||[];referrals=d.referrals||[];initApp();}}catch(e){}}
+window.addEventListener('DOMContentLoaded',async()=>{
+  if(sessionStorage.getItem('soihub_auth')==='1') await initApp();
 });
 
-// DATA
-let contacts=[];let referrals=[];let currentFilter='all';let bulkParsed=[];let editRefContactId=null;
-function saveData(){if(currentUser)saveUserData(currentUser.username,{contacts,referrals});}
+// ── MOBILE SIDEBAR ──
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
 
-// NAV
+// ── NAV ──
 function navigate(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -560,6 +706,7 @@ function navigate(view){
   const titles={dashboard:'Dashboard',contacts:'Contacts',profile:'Contact Profile',referrals:'Referrals',followup:'Follow-Up Center',charts:'Charts',reports:'Reports',ai:'AI Insights'};
   document.getElementById('topbarTitle').textContent=titles[view]||'SOI Hub';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+view+"'"))n.classList.add('active');});
+  closeSidebar();
   if(view==='contacts')renderContacts();
   if(view==='followup')renderFollowUp('call');
   if(view==='dashboard')updateDashboard();
@@ -569,18 +716,16 @@ function navigate(view){
   if(view==='charts')setTimeout(renderCharts,60);
 }
 
-// DASHBOARD
+// ── DASHBOARD ──
 function updateDashboard(){
   document.getElementById('statTotal').textContent=contacts.length;
-  document.getElementById('statUntouched').textContent=contacts.filter(c=>c.lastContact&&c.lastContact>90).length;
-  const totalRefs=referrals.length;
-  const closedRefs=referrals.filter(r=>r.status==='closed').length;
-  const conv=totalRefs>0?Math.round(closedRefs/totalRefs*100):0;
+  document.getElementById('statUntouched').textContent=contacts.filter(c=>c.last_contact&&c.last_contact>90).length;
+  const totalRefs=referrals.length,closedRefs=referrals.filter(r=>r.status==='closed').length,conv=totalRefs>0?Math.round(closedRefs/totalRefs*100):0;
   document.getElementById('statReferrals').textContent=totalRefs;
   document.getElementById('statRefSub').textContent=closedRefs+' closed · '+conv+'% conversion';
   const badge=document.getElementById('statConvBadge');
   if(totalRefs>0){badge.textContent=conv+'% conv rate';badge.style.display='inline-block';}else{badge.style.display='none';}
-  document.getElementById('statFollowups').textContent=contacts.filter(c=>!c.lastContact||c.lastContact>30).length;
+  document.getElementById('statFollowups').textContent=contacts.filter(c=>!c.last_contact||c.last_contact>30).length;
   ['A+','A','B','C'].forEach(t=>{document.getElementById('t'+t).textContent=contacts.filter(c=>c.tier===t).length;});
   document.getElementById('tBuyer').textContent=contacts.filter(c=>c.category==='Buyer').length;
   document.getElementById('tSeller').textContent=contacts.filter(c=>c.category==='Seller').length;
@@ -593,22 +738,22 @@ function updateDashboard(){
   document.getElementById('dashBirthdays').innerHTML=bdayC.length?bdayC.slice(0,4).map(c=>`<div class="mini-contact"><div class="mini-av" style="background:${c.color}">${initials(c)}</div><div><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${fmtDate(c.bday)} · ${c.tier}</div></div></div>`).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-state-title" style="font-size:18px">No birthdays this month</div></div>';
   const annexC=contacts.filter(c=>{if(!c.anniv)return false;return new Date(c.anniv+'T12:00:00').getMonth()===now.getMonth();});
   document.getElementById('qsAnniv').textContent=annexC.length;
-  document.getElementById('fc-call').textContent=contacts.filter(c=>!c.lastContact||c.lastContact>90).length;
-  document.getElementById('fc-text').textContent=contacts.filter(c=>!c.lastContact||c.lastContact>30).length;
+  document.getElementById('fc-call').textContent=contacts.filter(c=>!c.last_contact||c.last_contact>90).length;
+  document.getElementById('fc-text').textContent=contacts.filter(c=>!c.last_contact||c.last_contact>30).length;
   document.getElementById('fc-bday').textContent=bdayC.length;
   document.getElementById('fc-anniv').textContent=annexC.length;
   document.getElementById('fc-event').textContent=contacts.filter(c=>c.tier==='A+'||c.tier==='A').length;
   document.getElementById('fc-holiday').textContent=contacts.filter(c=>c.holiday==='Yes').length;
   document.getElementById('fc-market').textContent=contacts.filter(c=>c.market==='Yes').length;
   const champMap={};
-  referrals.forEach(r=>{const key=r.sourceContactId||r.sourceName||'Unknown';if(!champMap[key])champMap[key]={name:r.sourceName||'Unknown',id:r.sourceContactId,total:0,closed:0};champMap[key].total++;if(r.status==='closed')champMap[key].closed++;});
+  referrals.forEach(r=>{const key=r.source_contact_id||r.source_name||'Unknown';if(!champMap[key])champMap[key]={name:r.source_name||'Unknown',id:r.source_contact_id,total:0,closed:0};champMap[key].total++;if(r.status==='closed')champMap[key].closed++;});
   const champs=Object.values(champMap).sort((a,b)=>b.total-a.total).slice(0,4);
   document.getElementById('dashChampions').innerHTML=champs.length?champs.map((ch,i)=>`<div class="champion-row"><div class="champion-rank">${i+1}</div><div style="flex:1"><div class="mini-name">${ch.name}</div><div class="mini-detail">${ch.total} referral${ch.total!==1?'s':''} · ${ch.closed} closed</div></div><span class="mini-tag badge-green">${ch.total}</span></div>`).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-state-title" style="font-size:18px">No referrals yet</div></div>';
-  const vendors=contacts.filter(c=>c.category==='Vendor').slice(0,3);
-  document.getElementById('dashVendors').innerHTML=vendors.length?vendors.map(c=>`<div class="mini-contact"><div class="mini-av" style="background:${c.color}">${initials(c)}</div><div><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${c.type}</div></div></div>`).join(''):'<div class="empty-state" style="padding:14px 6px"><div class="empty-state-title" style="font-size:17px">No vendors yet</div></div>';
+  const vendors=contacts.filter(c=>c.category==='Vendor'||c.type==='Service Provider').slice(0,3);
+  document.getElementById('dashVendors').innerHTML=vendors.length?vendors.map(c=>`<div class="mini-contact"><div class="mini-av" style="background:${c.color}">${initials(c)}</div><div><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${c.type}</div></div></div>`).join(''):'<div class="empty-state" style="padding:14px 6px"><div class="empty-state-title" style="font-size:17px">No service providers yet</div></div>';
 }
 
-// CONTACTS
+// ── CONTACTS ──
 function setContactView(v){
   document.getElementById('cardView').style.display=v==='card'?'block':'none';
   document.getElementById('tableView').style.display=v==='table'?'block':'none';
@@ -626,20 +771,20 @@ function renderContacts(){
   if(!list.length){
     grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;padding:48px 20px"><div class="empty-state-icon"><svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="11" r="6.5" stroke="#a8a49f" stroke-width="1.5"/><path d="M4 30c0-7.18 5.82-13 13-13s13 5.82 13 13" stroke="#a8a49f" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="empty-state-title">${contacts.length===0?'No contacts yet':'No contacts match'}</div><div class="empty-state-sub">${contacts.length===0?'Add your first contact.':'Try a different filter.'}</div>${contacts.length===0?'<button class="btn btn-primary" onclick="openModal()">Add Contact</button>':''}</div>`;
   } else {
-    grid.innerHTML=list.map(c=>{const rc=referrals.filter(r=>r.sourceContactId===c.id).length;return`<div class="contact-card" onclick="showProfile(${c.id})"><span class="contact-tier-badge ${tierClass(c.tier)}">${c.tier}</span><div class="contact-card-header"><div class="contact-av-lg" style="background:${c.color}">${initials(c)}</div><div><div class="contact-name">${c.first} ${c.last}</div><div class="contact-type">${c.type} · ${c.category}</div></div></div>${c.phone?`<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2h2l.9 2.2-1.3 1.1A5.8 5.8 0 006.7 9l1.1-1.3L10 8.6v1.8a.8.8 0 01-.8.8A8.8 8.8 0 011.2 2.8.8.8 0 012 2z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> ${c.phone}</div>`:''}<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.2" stroke="currentColor" stroke-width="1.1"/><path d="M5.5 3.5v2.2l1.5 1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> ${c.lastContact?c.lastContact+' days ago':'<span style="color:var(--danger)">Never contacted</span>'}</div>${rc>0?`<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1l1.3 2.6 2.9.42-2.1 2.04.5 2.88L5.5 7.8 3.1 9.14l.5-2.88L1.5 4.16l2.9-.42z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg> ${rc} referral${rc!==1?'s':''}</div>`:''}<div class="contact-actions"><div class="act-btn">Call</div><div class="act-btn">Text</div><div class="act-btn">Email</div><div class="act-btn" onclick="event.stopPropagation();openRefModalForContact(${c.id})"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Referral</div></div></div>`;}).join('');
+    grid.innerHTML=list.map(c=>{const rc=referrals.filter(r=>r.source_contact_id===c.id).length;return`<div class="contact-card" onclick="showProfile('${c.id}')"><span class="contact-tier-badge ${tierClass(c.tier)}">${c.tier}</span><div class="contact-card-header"><div class="contact-av-lg" style="background:${c.color}">${initials(c)}</div><div><div class="contact-name">${c.first} ${c.last}</div><div class="contact-type">${c.type} · ${c.category}</div></div></div>${c.phone?`<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2h2l.9 2.2-1.3 1.1A5.8 5.8 0 006.7 9l1.1-1.3L10 8.6v1.8a.8.8 0 01-.8.8A8.8 8.8 0 011.2 2.8.8.8 0 012 2z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> ${c.phone}</div>`:''}<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.2" stroke="currentColor" stroke-width="1.1"/><path d="M5.5 3.5v2.2l1.5 1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> ${c.last_contact?c.last_contact+' days ago':'<span style="color:var(--danger)">Never contacted</span>'}</div>${rc>0?`<div class="contact-info-row"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1l1.3 2.6 2.9.42-2.1 2.04.5 2.88L5.5 7.8 3.1 9.14l.5-2.88L1.5 4.16l2.9-.42z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg> ${rc} referral${rc!==1?'s':''}</div>`:''}<div class="contact-actions"><div class="act-btn">Call</div><div class="act-btn">Text</div><div class="act-btn">Email</div><div class="act-btn" onclick="event.stopPropagation();openRefModalForContact('${c.id}')"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Referral</div></div></div>`;}).join('');
   }
   const table=document.getElementById('contactsTable');
-  table.innerHTML=`<thead><tr><th>Name</th><th>Type</th><th>Tier</th><th>Phone</th><th>Email</th><th>Last Contact</th><th>Referrals</th></tr></thead><tbody>${list.length?list.map(c=>{const rc=referrals.filter(r=>r.sourceContactId===c.id).length;return`<tr onclick="showProfile(${c.id})"><td><div style="display:flex;align-items:center;gap:7px"><div class="mini-av" style="background:${c.color};width:26px;height:26px;font-size:13px">${initials(c)}</div>${c.first} ${c.last}</div></td><td style="color:var(--text-muted)">${c.type}</td><td><span class="mini-tag ${tierClass(c.tier)}">${c.tier}</span></td><td>${c.phone||'—'}</td><td>${c.email||'—'}</td><td>${c.lastContact?c.lastContact+' days ago':'<span style="color:var(--danger);font-weight:500">Never</span>'}</td><td>${rc}</td></tr>`;}).join(''):`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">No contacts match.</td></tr>`}</tbody>`;
+  table.innerHTML=`<thead><tr><th>Name</th><th>Type</th><th>Tier</th><th>Phone</th><th>Email</th><th>Last Contact</th><th>Referrals</th></tr></thead><tbody>${list.length?list.map(c=>{const rc=referrals.filter(r=>r.source_contact_id===c.id).length;return`<tr onclick="showProfile('${c.id}')"><td><div style="display:flex;align-items:center;gap:7px"><div class="mini-av" style="background:${c.color};width:26px;height:26px;font-size:13px">${initials(c)}</div>${c.first} ${c.last}</div></td><td style="color:var(--text-muted)">${c.type}</td><td><span class="mini-tag ${tierClass(c.tier)}">${c.tier}</span></td><td>${c.phone||'—'}</td><td>${c.email||'—'}</td><td>${c.last_contact?c.last_contact+' days ago':'<span style="color:var(--danger);font-weight:500">Never</span>'}</td><td>${rc}</td></tr>`;}).join(''):`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">No contacts match.</td></tr>`}</tbody>`;
 }
 function filterContacts(el,val){document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');currentFilter=val;renderContacts();}
 
-// PROFILE
+// ── PROFILE ──
 function showProfile(id){
-  const c=contacts.find(x=>x.id===id);if(!c)return;
+  const c=contacts.find(x=>String(x.id)===String(id));if(!c)return;
   navigate('profile');
   document.getElementById('topbarTitle').textContent=c.first+' '+c.last;
-  const cRefs=referrals.filter(r=>r.sourceContactId===id);
-  const refListHtml=cRefs.length?cRefs.map(r=>`<div class="ref-item"><div class="ref-item-header"><div><div class="ref-item-name">${r.firstName} ${r.lastName}</div><div class="ref-item-meta">${statusBadge(r.status)}<span>${fmtDate(r.date)}</span>${r.phone?`<span>${r.phone}</span>`:''}</div></div></div>${r.notes?`<div class="ref-item-notes">${r.notes}</div>`:''}</div>`).join(''):'<div style="font-size:15px;color:var(--text-muted);padding:8px 0">No referrals from this contact yet.</div>';
+  const cRefs=referrals.filter(r=>String(r.source_contact_id)===String(id));
+  const refListHtml=cRefs.length?cRefs.map(r=>`<div class="ref-item"><div class="ref-item-header"><div><div class="ref-item-name">${r.first_name} ${r.last_name}</div><div class="ref-item-meta">${statusBadge(r.status)}<span>${fmtDate(r.date)}</span>${r.phone?`<span>${r.phone}</span>`:''}</div></div></div>${r.notes?`<div class="ref-item-notes">${r.notes}</div>`:''}</div>`).join(''):'<div style="font-size:15px;color:var(--text-muted);padding:8px 0">No referrals from this contact yet.</div>';
   document.getElementById('profileContent').innerHTML=`
   <div class="profile-left">
     <div class="profile-main-card">
@@ -653,14 +798,14 @@ function showProfile(id){
       <div class="quick-stat-row">
         <div class="quick-stat"><div class="quick-stat-val">${cRefs.length}</div><div class="quick-stat-lbl">Referrals</div></div>
         <div class="quick-stat"><div class="quick-stat-val">${cRefs.filter(r=>r.status==='closed').length}</div><div class="quick-stat-lbl">Closed</div></div>
-        <div class="quick-stat"><div class="quick-stat-val">${c.lastContact||'—'}</div><div class="quick-stat-lbl">Days Since</div></div>
+        <div class="quick-stat"><div class="quick-stat-val">${c.last_contact||'—'}</div><div class="quick-stat-lbl">Days Since</div></div>
       </div>
       <div class="panel-title" style="margin-bottom:9px">Tags</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">
-        <span class="filter-chip active" style="font-size:13.5px;padding:3px 8px">${c.type}</span>
-        <span class="filter-chip active" style="font-size:13.5px;padding:3px 8px">${c.category}</span>
-        ${c.market==='Yes'?'<span class="filter-chip active" style="font-size:13.5px;padding:3px 8px">Market Updates</span>':''}
-        ${c.holiday==='Yes'?'<span class="filter-chip active" style="font-size:13.5px;padding:3px 8px">Holiday Cards</span>':''}
+        <span class="filter-chip active" style="font-size:13px;padding:3px 8px">${c.type}</span>
+        <span class="filter-chip active" style="font-size:13px;padding:3px 8px">${c.category}</span>
+        ${c.market==='Yes'?'<span class="filter-chip active" style="font-size:13px;padding:3px 8px">Market Updates</span>':''}
+        ${c.holiday==='Yes'?'<span class="filter-chip active" style="font-size:13px;padding:3px 8px">Holiday Cards</span>':''}
       </div>
     </div>
   </div>
@@ -684,12 +829,12 @@ function showProfile(id){
           <div class="info-item"><label>Holiday Cards</label><span>${c.holiday||'No'}</span></div>
         </div>
       </div>
-      ${c.notes?`<div class="info-section"><div class="info-section-title">Notes</div><div style="font-size:15.5px;color:var(--dark);white-space:pre-wrap">${c.notes}</div></div>`:''}
+      ${c.notes?`<div class="info-section"><div class="info-section-title">Notes</div><div style="font-size:15px;color:var(--dark);white-space:pre-wrap">${c.notes}</div></div>`:''}
     </div>
     <div class="panel">
-      <div class="info-section-title" style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-light);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between">
+      <div class="info-section-title" style="font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-light);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between">
         Referrals from ${c.first}
-        <button class="btn btn-primary btn-sm" onclick="openRefModalForContact(${id})">+ Add Referral</button>
+        <button class="btn btn-primary btn-sm" onclick="openRefModalForContact('${id}')">+ Add Referral</button>
       </div>
       ${refListHtml}
     </div>
@@ -697,69 +842,64 @@ function showProfile(id){
   </div>`;
 }
 
-// FOLLOW-UP
+// ── FOLLOW-UP ──
 function renderFollowUp(key){
   const now=new Date();let list=[];
-  if(key==='call')list=contacts.filter(c=>!c.lastContact||c.lastContact>90).map(c=>({c,reason:c.lastContact?`${c.lastContact} days since last contact · ${c.type}`:'Never contacted'}));
-  else if(key==='text')list=contacts.filter(c=>!c.lastContact||c.lastContact>30).map(c=>({c,reason:c.lastContact?`${c.lastContact} days since last contact`:'Never contacted'}));
+  if(key==='call')list=contacts.filter(c=>!c.last_contact||c.last_contact>90).map(c=>({c,reason:c.last_contact?`${c.last_contact} days since last contact · ${c.type}`:'Never contacted'}));
+  else if(key==='text')list=contacts.filter(c=>!c.last_contact||c.last_contact>30).map(c=>({c,reason:c.last_contact?`${c.last_contact} days since last contact`:'Never contacted'}));
   else if(key==='bday')list=contacts.filter(c=>{if(!c.bday)return false;return new Date(c.bday+'T12:00:00').getMonth()===now.getMonth();}).map(c=>({c,reason:`Birthday: ${fmtDate(c.bday)} · ${c.type}`}));
   else if(key==='anniv')list=contacts.filter(c=>{if(!c.anniv)return false;return new Date(c.anniv+'T12:00:00').getMonth()===now.getMonth();}).map(c=>({c,reason:`Home Anniversary: ${fmtDate(c.anniv)}`}));
   else if(key==='event')list=contacts.filter(c=>c.tier==='A+'||c.tier==='A').map(c=>({c,reason:`${c.tier} VIP — client event invite · ${c.type}`}));
   else if(key==='holiday')list=contacts.filter(c=>c.holiday==='Yes').map(c=>({c,reason:'Include in holiday card mailing · '+(c.address||'No address set')}));
   else if(key==='market')list=contacts.filter(c=>c.market==='Yes').map(c=>({c,reason:'Include in monthly market update email'}));
   const labels={call:'No contacts overdue for a call.',text:'No contacts need a text right now.',bday:'No birthdays this month.',anniv:'No home anniversaries this month.',event:'No A+ or A contacts yet.',holiday:'No contacts on holiday card list.',market:'No contacts on market update list.'};
-  document.getElementById('fuList').innerHTML=list.length?list.map(({c,reason})=>`<div class="fu-item"><div class="mini-av" style="background:${c.color};width:36px;height:36px;font-size:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div><div class="fu-item-info"><div class="fu-item-name">${c.first} ${c.last}</div><div class="fu-item-reason">${reason}</div></div><div class="fu-actions"><button class="btn btn-ghost btn-sm">Call</button><button class="btn btn-ghost btn-sm">Text</button><button class="btn btn-primary btn-sm">Done</button></div></div>`).join(''):`<div class="empty-state" style="padding:48px 20px"><div class="empty-state-title">${labels[key]||'Nothing here.'}</div><div class="empty-state-sub">Add contacts to populate this list.</div></div>`;
+  document.getElementById('fuList').innerHTML=list.length?list.map(({c,reason})=>`<div class="fu-item"><div class="mini-av" style="background:${c.color};width:36px;height:36px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div><div class="fu-item-info"><div class="fu-item-name">${c.first} ${c.last}</div><div class="fu-item-reason">${reason}</div></div><div class="fu-actions"><button class="btn btn-ghost btn-sm">Call</button><button class="btn btn-ghost btn-sm">Text</button><button class="btn btn-primary btn-sm">Done</button></div></div>`).join(''):`<div class="empty-state" style="padding:48px 20px"><div class="empty-state-title">${labels[key]||'Nothing here.'}</div><div class="empty-state-sub">Add contacts to populate this list.</div></div>`;
 }
 function setFuTab(el,key){document.querySelectorAll('.fu-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderFollowUp(key);}
 
-// REFERRALS VIEW
+// ── REFERRALS ──
 function updateReferralView(){
   const total=referrals.length,closed=referrals.filter(r=>r.status==='closed').length,pending=referrals.filter(r=>r.status==='pending').length,conv=total>0?Math.round(closed/total*100):0;
   document.getElementById('rmTotal').textContent=total;document.getElementById('rmClosed').textContent=closed;document.getElementById('rmConv').textContent=conv+'%';document.getElementById('rmPending').textContent=pending;
   const champMap={};
-  referrals.forEach(r=>{const key=r.sourceContactId||r.sourceName||'Unknown';if(!champMap[key])champMap[key]={name:r.sourceName||'Unknown',id:r.sourceContactId,total:0,closed:0,lost:0,pending:0};champMap[key].total++;champMap[key][r.status]=(champMap[key][r.status]||0)+1;});
+  referrals.forEach(r=>{const key=r.source_contact_id||r.source_name||'Unknown';if(!champMap[key])champMap[key]={name:r.source_name||'Unknown',id:r.source_contact_id,total:0,closed:0,lost:0,pending:0};champMap[key].total++;champMap[key][r.status]=(champMap[key][r.status]||0)+1;});
   const champs=Object.values(champMap).sort((a,b)=>b.total-a.total);
-  document.getElementById('championsPanel').innerHTML=champs.length?champs.map((ch,i)=>{const c=contacts.find(x=>x.id===ch.id);return`<div class="champion-row"><div class="champion-rank">${i+1}</div>${c?`<div class="mini-av" style="background:${c.color};width:28px;height:28px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div>`:'<div style="width:28px;height:28px;border-radius:50%;background:var(--bg3);flex-shrink:0"></div>'}<div style="flex:1"><div class="mini-name">${ch.name}</div><div class="mini-detail">${ch.total} referral${ch.total!==1?'s':''} · ${ch.closed||0} closed · ${ch.pending||0} pending</div></div><span class="mini-tag badge-green">${ch.total}</span></div>`;}).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-state-title" style="font-size:18px">No referral sources yet</div></div>';
+  document.getElementById('championsPanel').innerHTML=champs.length?champs.map((ch,i)=>{const c=contacts.find(x=>String(x.id)===String(ch.id));return`<div class="champion-row"><div class="champion-rank">${i+1}</div>${c?`<div class="mini-av" style="background:${c.color};width:28px;height:28px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div>`:'<div style="width:28px;height:28px;border-radius:50%;background:var(--bg3);flex-shrink:0"></div>'}<div style="flex:1"><div class="mini-name">${ch.name}</div><div class="mini-detail">${ch.total} referral${ch.total!==1?'s':''} · ${ch.closed||0} closed · ${ch.pending||0} pending</div></div><span class="mini-tag badge-green">${ch.total}</span></div>`;}).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-state-title" style="font-size:18px">No referral sources yet</div></div>';
   const pipeR=referrals.filter(r=>r.status==='pending');
-  document.getElementById('pipelinePanel').innerHTML=pipeR.length?pipeR.slice(0,6).map(r=>`<div class="mini-contact"><div style="flex:1"><div class="mini-name">${r.firstName} ${r.lastName}</div><div class="mini-detail">From: ${r.sourceName||'Unknown'} · ${fmtDate(r.date)}</div></div>${statusBadge(r.status)}</div>`).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-state-title" style="font-size:18px">No pending referrals</div></div>';
+  document.getElementById('pipelinePanel').innerHTML=pipeR.length?pipeR.slice(0,6).map(r=>`<div class="mini-contact"><div style="flex:1"><div class="mini-name">${r.first_name} ${r.last_name}</div><div class="mini-detail">From: ${r.source_name||'Unknown'} · ${fmtDate(r.date)}</div></div>${statusBadge(r.status)}</div>`).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-state-title" style="font-size:18px">No pending referrals</div></div>';
   document.getElementById('refAllCount').textContent=total?`(${total} total)`:'';
-  document.getElementById('allReferralsTable').innerHTML=referrals.length?`<div class="ref-table-wrap"><table class="ref-table"><thead><tr><th>Referral</th><th>Source</th><th>Date</th><th>Status</th><th>Notes</th></tr></thead><tbody>${referrals.map(r=>`<tr><td><div style="font-weight:600">${r.firstName} ${r.lastName}</div>${r.phone?`<div style="font-size:14px;color:var(--text-muted)">${r.phone}</div>`:''}</td><td>${r.sourceName||'—'}</td><td>${fmtDate(r.date)}</td><td>${statusBadge(r.status)}</td><td style="font-size:14px;color:var(--text-muted);max-width:160px">${r.notes||'—'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><div class="empty-state-title">No referrals tracked yet</div><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="openReferralModal()">Add First Referral</button></div>';
+  document.getElementById('allReferralsTable').innerHTML=referrals.length?`<div class="ref-table-wrap"><table class="ref-table"><thead><tr><th>Referral</th><th>Source</th><th>Date</th><th>Status</th><th>Notes</th></tr></thead><tbody>${referrals.map(r=>`<tr><td><div style="font-weight:600">${r.first_name} ${r.last_name}</div>${r.phone?`<div style="font-size:14px;color:var(--text-muted)">${r.phone}</div>`:''}</td><td>${r.source_name||'—'}</td><td>${fmtDate(r.date)}</td><td>${statusBadge(r.status)}</td><td style="font-size:14px;color:var(--text-muted);max-width:160px">${r.notes||'—'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><div class="empty-state-title">No referrals tracked yet</div><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="openReferralModal()">Add First Referral</button></div>';
 }
 
-// CHARTS
+// ── CHARTS ──
 const chartInstances={};
 function destroyCharts(){Object.values(chartInstances).forEach(c=>{try{c.destroy();}catch(e){}});Object.keys(chartInstances).forEach(k=>delete chartInstances[k]);}
 function renderCharts(){
   destroyCharts();
-  const pal={p:'#a19276',g:'#6b9e7a',b:'#5c85b8',w:'#c9904a',d:'#b85c5c',l:'#ede8df'};
-  const baseOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#252526',titleFont:{family:'Barlow Semi Condensed',size:11},bodyFont:{family:'Barlow Semi Condensed',size:11},padding:9,cornerRadius:7}},scales:{x:{grid:{display:false},ticks:{font:{family:'Barlow Semi Condensed',size:10},color:'#a8a49f'}},y:{grid:{color:'#f0ebe3'},ticks:{font:{family:'Barlow Semi Condensed',size:10},color:'#a8a49f'},beginAtZero:true}}};
+  const pal={p:'#a19276',g:'#6b9e7a',b:'#5c85b8',w:'#c9904a',d:'#b85c5c'};
+  const baseOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#252526',titleFont:{family:'Barlow Semi Condensed',size:13},bodyFont:{family:'Barlow Semi Condensed',size:13},padding:9,cornerRadius:7}},scales:{x:{grid:{display:false},ticks:{font:{family:'Barlow Semi Condensed',size:12},color:'#a8a49f'}},y:{grid:{color:'#f0ebe3'},ticks:{font:{family:'Barlow Semi Condensed',size:12},color:'#a8a49f'},beginAtZero:true}}};
   const now=new Date();const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const lastSix=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);lastSix.push(months[d.getMonth()]);}
-  // Contact Growth
   const total=contacts.length;
   const growth=lastSix.map((_,i)=>total>0?Math.round(total*Math.pow((i+1)/6,0.7)):0);
   const c1=document.getElementById('chartGrowth');
   if(c1){chartInstances.growth=new Chart(c1.getContext('2d'),{type:'line',data:{labels:lastSix,datasets:[{data:growth,borderColor:pal.p,backgroundColor:'rgba(161,146,118,0.09)',borderWidth:2,fill:true,tension:0.4,pointBackgroundColor:pal.p,pointRadius:3}]},options:baseOpts});}
-  // Referrals by Month
   const refByMonth=Array(6).fill(0);
   referrals.forEach(r=>{if(!r.date)return;const d=new Date(r.date+'T12:00:00');const diff=(now.getFullYear()-d.getFullYear())*12+(now.getMonth()-d.getMonth());if(diff>=0&&diff<6)refByMonth[5-diff]++;});
   const c2=document.getElementById('chartRefByMonth');
-  if(c2){chartInstances.refs=new Chart(c2.getContext('2d'),{type:'bar',data:{labels:lastSix,datasets:[{data:refByMonth,backgroundColor:pal.g,borderRadius:6,hoverBackgroundColor:'#5a8c6a'}]},options:baseOpts});}
-  // Follow-Up Completion
-  const overdue=contacts.filter(c=>!c.lastContact||c.lastContact>90).length;
-  const active=contacts.filter(c=>c.lastContact&&c.lastContact<=30).length;
-  const warm=contacts.filter(c=>c.lastContact&&c.lastContact>30&&c.lastContact<=90).length;
+  if(c2){chartInstances.refs=new Chart(c2.getContext('2d'),{type:'bar',data:{labels:lastSix,datasets:[{data:refByMonth,backgroundColor:pal.g,borderRadius:6}]},options:baseOpts});}
+  const overdue=contacts.filter(c=>!c.last_contact||c.last_contact>90).length;
+  const active=contacts.filter(c=>c.last_contact&&c.last_contact<=30).length;
+  const warm=contacts.filter(c=>c.last_contact&&c.last_contact>30&&c.last_contact<=90).length;
   const c3=document.getElementById('chartFollowup');
-  if(c3){chartInstances.fu=new Chart(c3.getContext('2d'),{type:'doughnut',data:{labels:['Overdue (90+ days)','Active (0-30 days)','Warm (31-90 days)'],datasets:[{data:[overdue,active,warm],backgroundColor:[pal.d,pal.g,pal.w],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Barlow Semi Condensed',size:10},color:'#7a7672',boxWidth:9,padding:10}},tooltip:{backgroundColor:'#252526',titleFont:{family:'Barlow Semi Condensed',size:11},bodyFont:{family:'Barlow Semi Condensed',size:11},padding:9,cornerRadius:7}}}});}
-  // Opportunity Breakdown
-  const cats=['Buyer','Seller','Investor','General SOI','Vendor','Personal'];
-  const catCounts=cats.map(cat=>contacts.filter(c=>c.category===cat).length);
-  const catColors=[pal.w,pal.d,pal.b,pal.p,'#7a6e8f','#6b8e9e'];
+  if(c3){chartInstances.fu=new Chart(c3.getContext('2d'),{type:'doughnut',data:{labels:['Overdue (90+d)','Active (0-30d)','Warm (31-90d)'],datasets:[{data:[overdue,active,warm],backgroundColor:[pal.d,pal.g,pal.w],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Barlow Semi Condensed',size:12},color:'#7a7672',boxWidth:9,padding:10}},tooltip:{backgroundColor:'#252526',titleFont:{family:'Barlow Semi Condensed',size:13},bodyFont:{family:'Barlow Semi Condensed',size:13},padding:9,cornerRadius:7}}}});}
+  const cats=['Buyer','Seller','Investor','General SOI','Service Provider','Personal'];
+  const catCounts=cats.map(cat=>contacts.filter(c=>c.category===cat||c.type===cat).length);
   const c4=document.getElementById('chartOpportunity');
-  if(c4){chartInstances.opp=new Chart(c4.getContext('2d'),{type:'bar',data:{labels:cats,datasets:[{data:catCounts,backgroundColor:catColors,borderRadius:5}]},options:{...baseOpts,indexAxis:'y',scales:{x:{...baseOpts.scales.x,beginAtZero:true},y:{...baseOpts.scales.y,grid:{display:false}}}}});}
+  if(c4){chartInstances.opp=new Chart(c4.getContext('2d'),{type:'bar',data:{labels:cats,datasets:[{data:catCounts,backgroundColor:[pal.w,pal.d,pal.b,pal.p,'#7a6e8f','#6b8e9e'],borderRadius:5}]},options:{...baseOpts,indexAxis:'y',scales:{x:{...baseOpts.scales.x,beginAtZero:true},y:{...baseOpts.scales.y,grid:{display:false}}}}});}
 }
 
-// REPORTS
+// ── REPORTS ──
 function updateReports(){
   if(!contacts.length)return;
   const types={};contacts.forEach(c=>{types[c.type]=(types[c.type]||0)+1;});
@@ -767,43 +907,64 @@ function updateReports(){
   document.getElementById('reportBreakdown').innerHTML=`<div class="bar-chart">${sorted.map(([k,v])=>`<div class="bar-row"><div class="bar-label">${k}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxV*100)}%"></div></div><div class="bar-val">${v}</div></div>`).join('')}</div>`;
   const tc={'A+':contacts.filter(c=>c.tier==='A+').length,'A':contacts.filter(c=>c.tier==='A').length,'B':contacts.filter(c=>c.tier==='B').length,'C':contacts.filter(c=>c.tier==='C').length};
   const tcol={'A+':'#6b9e7a','A':'#a19276','B':'#5c85b8','C':'#b8b4af'};const tm=Math.max(Object.values(tc).reduce((s,v)=>s+v,0),1);
-  document.getElementById('reportTiers').innerHTML=`<div class="donut-wrap"><svg width="88" height="88" viewBox="0 0 88 88">${(()=>{let off=0;return Object.entries(tc).map(([k,v])=>{const da=v/tm*215;const r=`<circle cx="44" cy="44" r="34" fill="none" stroke="${tcol[k]}" stroke-width="11" stroke-dasharray="${da} ${215-da}" stroke-dashoffset="${-off}" transform="rotate(-90 44 44)"/>`;off+=da;return r;}).join('');})()}<text x="44" y="48" text-anchor="middle" font-size="12" font-family="Barlow Semi Condensed" fill="#252526" font-weight="600">${contacts.length}</text></svg><div class="donut-legend">${Object.entries(tc).map(([k,v])=>`<div class="legend-row"><div class="legend-dot" style="background:${tcol[k]}"></div><div class="legend-label">${k} Tier</div><div class="legend-val">${v}</div></div>`).join('')}</div></div>`;
-  const refs=contacts.map(c=>({c,rc:referrals.filter(r=>r.sourceContactId===c.id).length})).filter(x=>x.rc>0).sort((a,b)=>b.rc-a.rc).slice(0,8);
+  document.getElementById('reportTiers').innerHTML=`<div class="donut-wrap"><svg width="88" height="88" viewBox="0 0 88 88">${(()=>{let off=0;return Object.entries(tc).map(([k,v])=>{const da=v/tm*215;const r=`<circle cx="44" cy="44" r="34" fill="none" stroke="${tcol[k]}" stroke-width="11" stroke-dasharray="${da} ${215-da}" stroke-dashoffset="${-off}" transform="rotate(-90 44 44)"/>`;off+=da;return r;}).join('');})()}<text x="44" y="48" text-anchor="middle" font-size="15" font-family="Barlow Semi Condensed" fill="#252526" font-weight="600">${contacts.length}</text></svg><div class="donut-legend">${Object.entries(tc).map(([k,v])=>`<div class="legend-row"><div class="legend-dot" style="background:${tcol[k]}"></div><div class="legend-label">${k} Tier</div><div class="legend-val">${v}</div></div>`).join('')}</div></div>`;
+  const refs=contacts.map(c=>({c,rc:referrals.filter(r=>String(r.source_contact_id)===String(c.id)).length})).filter(x=>x.rc>0).sort((a,b)=>b.rc-a.rc).slice(0,8);
   document.getElementById('reportReferrals').innerHTML=refs.length?`<div class="metric-list">${refs.map(({c,rc})=>`<div class="metric-row"><div class="metric-name">${c.first} ${c.last}</div><div class="metric-val">${rc}</div></div>`).join('')}</div>`:'<div class="empty-state"><div class="empty-state-title">No referrals tracked</div></div>';
   const b={'Active (0-30d)':0,'Warm (31-60d)':0,'Cool (61-90d)':0,'Cold (90+d)':0,'Never':0};
-  contacts.forEach(c=>{if(!c.lastContact)b['Never']++;else if(c.lastContact<=30)b['Active (0-30d)']++;else if(c.lastContact<=60)b['Warm (31-60d)']++;else if(c.lastContact<=90)b['Cool (61-90d)']++;else b['Cold (90+d)']++;});
+  contacts.forEach(c=>{if(!c.last_contact)b['Never']++;else if(c.last_contact<=30)b['Active (0-30d)']++;else if(c.last_contact<=60)b['Warm (31-60d)']++;else if(c.last_contact<=90)b['Cool (61-90d)']++;else b['Cold (90+d)']++;});
   const em=Math.max(...Object.values(b),1);
   document.getElementById('reportEngagement').innerHTML=`<div class="bar-chart">${Object.entries(b).map(([k,v])=>`<div class="bar-row"><div class="bar-label">${k.split(' ')[0]}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/em*100)}%"></div></div><div class="bar-val">${v}</div></div>`).join('')}</div>`;
 }
 
-// AI
+// ── AI ──
 function updateAI(){
-  const call=contacts.filter(c=>!c.lastContact||c.lastContact>30).sort((a,b)=>(b.lastContact||999)-(a.lastContact||999)).slice(0,4);
-  document.getElementById('aiCall').innerHTML=call.length?call.map(c=>`<div class="ai-contact-row"><div class="mini-av" style="background:${c.color};width:32px;height:32px;font-size:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div><div style="flex:1"><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${c.lastContact?c.lastContact+' days ago':'Never contacted'} · ${c.type}</div></div><span class="ai-reason">${c.tier}</span></div>`).join(''):'<div class="empty-state" style="padding:10px 0"><div class="empty-state-sub">Add contacts to get suggestions.</div></div>';
-  const slipping=contacts.filter(c=>c.lastContact&&c.lastContact>90).sort((a,b)=>b.lastContact-a.lastContact).slice(0,4);
-  document.getElementById('aiSlipping').innerHTML=slipping.length?slipping.map(c=>`<div class="ai-contact-row"><div class="mini-av" style="background:${c.color};width:32px;height:32px;font-size:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div><div style="flex:1"><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${c.lastContact} days since contact</div></div><span class="ai-reason" style="background:rgba(184,92,92,0.1);color:var(--danger)">${c.lastContact}d</span></div>`).join(''):'<div class="empty-state" style="padding:10px 0"><div class="empty-state-sub">All contacts within 90 days — great work!</div></div>';
-  const champMap={};referrals.forEach(r=>{const key=r.sourceContactId||r.sourceName;if(!champMap[key])champMap[key]={name:r.sourceName||'Unknown',total:0,closed:0,id:r.sourceContactId};champMap[key].total++;if(r.status==='closed')champMap[key].closed++;});
+  const call=contacts.filter(c=>!c.last_contact||c.last_contact>30).sort((a,b)=>(b.last_contact||999)-(a.last_contact||999)).slice(0,4);
+  document.getElementById('aiCall').innerHTML=call.length?call.map(c=>`<div class="ai-contact-row"><div class="mini-av" style="background:${c.color};width:32px;height:32px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div><div style="flex:1"><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${c.last_contact?c.last_contact+' days ago':'Never contacted'} · ${c.type}</div></div><span class="ai-reason">${c.tier}</span></div>`).join(''):'<div class="empty-state" style="padding:10px 0"><div class="empty-state-sub">Add contacts to get suggestions.</div></div>';
+  const slipping=contacts.filter(c=>c.last_contact&&c.last_contact>90).sort((a,b)=>b.last_contact-a.last_contact).slice(0,4);
+  document.getElementById('aiSlipping').innerHTML=slipping.length?slipping.map(c=>`<div class="ai-contact-row"><div class="mini-av" style="background:${c.color};width:32px;height:32px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div><div style="flex:1"><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${c.last_contact} days since contact</div></div><span class="ai-reason" style="background:rgba(184,92,92,0.1);color:var(--danger)">${c.last_contact}d</span></div>`).join(''):'<div class="empty-state" style="padding:10px 0"><div class="empty-state-sub">All contacts within 90 days!</div></div>';
+  const champMap={};referrals.forEach(r=>{const key=r.source_contact_id||r.source_name;if(!champMap[key])champMap[key]={name:r.source_name||'Unknown',total:0,closed:0,id:r.source_contact_id};champMap[key].total++;if(r.status==='closed')champMap[key].closed++;});
   const champs=Object.values(champMap).sort((a,b)=>b.total-a.total).slice(0,4);
-  document.getElementById('aiTop').innerHTML=champs.length?champs.map(ch=>{const c=contacts.find(x=>x.id===ch.id);return`<div class="ai-contact-row">${c?`<div class="mini-av" style="background:${c.color};width:32px;height:32px;font-size:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div>`:'<div style="width:32px;height:32px;border-radius:50%;background:var(--bg3);flex-shrink:0"></div>'}<div style="flex:1"><div class="mini-name">${ch.name}</div><div class="mini-detail">${ch.total} referral${ch.total!==1?'s':''} · ${ch.closed} closed</div></div><span class="ai-reason">Champion</span></div>`;}).join(''):'<div class="empty-state" style="padding:10px 0"><div class="empty-state-sub">Track referrals to see your champions.</div></div>';
-  const never=contacts.filter(c=>!c.lastContact).slice(0,4);
-  document.getElementById('aiNever').innerHTML=never.length?never.map(c=>`<div class="ai-contact-row"><div class="mini-av" style="background:${c.color};width:32px;height:32px;font-size:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div><div style="flex:1"><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${c.type} · Never contacted</div></div><span class="ai-reason" style="background:rgba(184,92,92,0.1);color:var(--danger)">Reach out</span></div>`).join(''):'<div class="empty-state" style="padding:10px 0"><div class="empty-state-sub">All contacts have been reached — great!</div></div>';
+  document.getElementById('aiTop').innerHTML=champs.length?champs.map(ch=>{const c=contacts.find(x=>String(x.id)===String(ch.id));return`<div class="ai-contact-row">${c?`<div class="mini-av" style="background:${c.color};width:32px;height:32px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div>`:'<div style="width:32px;height:32px;border-radius:50%;background:var(--bg3);flex-shrink:0"></div>'}<div style="flex:1"><div class="mini-name">${ch.name}</div><div class="mini-detail">${ch.total} referral${ch.total!==1?'s':''} · ${ch.closed} closed</div></div><span class="ai-reason">Champion</span></div>`;}).join(''):'<div class="empty-state" style="padding:10px 0"><div class="empty-state-sub">Track referrals to see your champions.</div></div>';
+  const never=contacts.filter(c=>!c.last_contact).slice(0,4);
+  document.getElementById('aiNever').innerHTML=never.length?never.map(c=>`<div class="ai-contact-row"><div class="mini-av" style="background:${c.color};width:32px;height:32px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0">${initials(c)}</div><div style="flex:1"><div class="mini-name">${c.first} ${c.last}</div><div class="mini-detail">${c.type} · Never contacted</div></div><span class="ai-reason" style="background:rgba(184,92,92,0.1);color:var(--danger)">Reach out</span></div>`).join(''):'<div class="empty-state" style="padding:10px 0"><div class="empty-state-sub">All contacts have been reached!</div></div>';
 }
 
-// CONTACT MODAL
+// ── ADD CONTACT MODAL ──
 function openModal(){document.getElementById('modalOverlay').classList.add('open');}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
 function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
-function saveContact(){
+async function saveContact(){
   const first=document.getElementById('fFirst').value.trim(),last=document.getElementById('fLast').value.trim();
   if(!first&&!last){showToast('Please enter a name.','error');return;}
-  const c={id:Date.now(),first:first||'—',last:last||'',phone:document.getElementById('fPhone').value.trim(),email:document.getElementById('fEmail').value.trim(),address:document.getElementById('fAddress').value.trim(),bday:document.getElementById('fBday').value,spouse:document.getElementById('fSpouse').value.trim(),type:document.getElementById('fType').value,tier:document.getElementById('fTier').value,category:document.getElementById('fCategory').value,met:document.getElementById('fMet').value.trim(),owner:document.getElementById('fOwner').value,anniv:document.getElementById('fAnniv').value,market:document.getElementById('fMarket').value,holiday:document.getElementById('fHoliday').value,notes:document.getElementById('fNotes').value.trim(),lastContact:null,color:colorFor(contacts.length)};
-  contacts.push(c);saveData();closeModal();
+  const newContact={
+    first:first||'—',last:last||'',
+    phone:document.getElementById('fPhone').value.trim(),
+    email:document.getElementById('fEmail').value.trim(),
+    address:document.getElementById('fAddress').value.trim(),
+    bday:document.getElementById('fBday').value||null,
+    spouse:document.getElementById('fSpouse').value.trim(),
+    type:document.getElementById('fType').value,
+    tier:document.getElementById('fTier').value,
+    category:document.getElementById('fCategory').value,
+    met:document.getElementById('fMet').value.trim(),
+    owner:document.getElementById('fOwner').value,
+    anniv:document.getElementById('fAnniv').value||null,
+    market:document.getElementById('fMarket').value,
+    holiday:document.getElementById('fHoliday').value,
+    notes:document.getElementById('fNotes').value.trim(),
+    last_contact:null,
+    color:colorFor(contacts.length)
+  };
+  const saved=await dbAddContact(newContact);
+  if(!saved)return;
+  if(SUPABASE_CONFIGURED && db) contacts.push(saved);
+  closeModal();
   ['fFirst','fLast','fPhone','fEmail','fAddress','fSpouse','fMet','fNotes'].forEach(id=>document.getElementById(id).value='');
   ['fBday','fAnniv'].forEach(id=>document.getElementById(id).value='');
-  updateDashboard();showToast(c.first+' '+c.last+' added.','success');navigate('contacts');
+  updateDashboard();showToast(saved.first+' '+saved.last+' saved.','success');navigate('contacts');
 }
 
-// REFERRAL MODAL
+// ── REFERRAL MODAL ──
 function populateSourceDropdown(){const sel=document.getElementById('rSource');sel.innerHTML='<option value="">— Select existing contact —</option>'+contacts.map(c=>`<option value="${c.id}">${c.first} ${c.last}</option>`).join('');}
 function openReferralModal(){
   editRefContactId=null;populateSourceDropdown();
@@ -824,30 +985,51 @@ function openRefModalForContact(contactId){
 }
 function closeRefModal(){document.getElementById('refModalOverlay').classList.remove('open');editRefContactId=null;}
 function closeRefModalOutside(e){if(e.target===document.getElementById('refModalOverlay'))closeRefModal();}
-function saveReferral(){
+async function saveReferral(){
   const firstName=document.getElementById('rFirst').value.trim(),lastName=document.getElementById('rLast').value.trim();
   if(!firstName&&!lastName){showToast("Enter the referred person's name.",'error');return;}
-  const sourceContactId=parseInt(document.getElementById('rSource').value)||null;
-  const sourceContact=sourceContactId?contacts.find(c=>c.id===sourceContactId):null;
+  const sourceContactId=document.getElementById('rSource').value||null;
+  const sourceContact=sourceContactId?contacts.find(c=>String(c.id)===String(sourceContactId)):null;
   const sourceName=sourceContact?(sourceContact.first+' '+sourceContact.last).trim():document.getElementById('rSourceName').value.trim()||'Unknown';
-  const ref={id:Date.now(),sourceContactId,sourceName,firstName,lastName,phone:document.getElementById('rPhone').value.trim(),email:document.getElementById('rEmail').value.trim(),date:document.getElementById('rDate').value,status:document.getElementById('rStatus').value,notes:document.getElementById('rNotes').value.trim()};
-  referrals.push(ref);saveData();closeRefModal();
-  updateDashboard();showToast('Referral from '+sourceName+' saved.','success');
+  const newRef={
+    source_contact_id:sourceContactId||null,
+    source_name:sourceName,
+    first_name:firstName,last_name:lastName,
+    phone:document.getElementById('rPhone').value.trim(),
+    email:document.getElementById('rEmail').value.trim(),
+    date:document.getElementById('rDate').value||null,
+    status:document.getElementById('rStatus').value,
+    notes:document.getElementById('rNotes').value.trim()
+  };
+  const saved=await dbAddReferral(newRef);
+  if(!saved)return;
+  if(SUPABASE_CONFIGURED && db) referrals.push(saved);
+  closeRefModal();updateDashboard();
+  showToast('Referral from '+sourceName+' saved.','success');
   if(editRefContactId)showProfile(editRefContactId);else navigate('referrals');
 }
 
-// VCF
+// ── VCF IMPORT ──
 function importVCF(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=ev=>{
+  reader.onload=async ev=>{
     const text=ev.target.result;const vcards=text.split(/BEGIN:VCARD/i).filter(v=>v.trim());let imported=0;
-    vcards.forEach(v=>{const fn=(v.match(/FN[^:]*:(.*)/i)?.[1]||'').trim();const parts=fn.split(' ');const first=parts[0]||'',last=parts.slice(1).join(' ')||'';const phone=(v.match(/TEL[^:]*:([\d\s\-\(\)\+]+)/i)?.[1]||'').trim();const email=(v.match(/EMAIL[^:]*:([^\r\n]+)/i)?.[1]||'').trim();const adr=(v.match(/ADR[^:]*:([^\r\n]+)/i)?.[1]||'').replace(/;/g,' ').trim();if(first||last){contacts.push({id:Date.now()+imported,first,last,phone,email,address:adr,type:'Other',tier:'B',category:'General SOI',market:'No',holiday:'No',lastContact:null,color:colorFor(contacts.length)});imported++;}});
-    saveData();closeModal();updateDashboard();showToast(imported+' contact'+(imported!==1?'s':'')+' imported.','success');navigate('contacts');
+    for(const v of vcards){
+      const fn=(v.match(/FN[^:]*:(.*)/i)?.[1]||'').trim();const parts=fn.split(' ');
+      const first=parts[0]||'',last=parts.slice(1).join(' ')||'';
+      if(!first&&!last)continue;
+      const phone=(v.match(/TEL[^:]*:([\d\s\-\(\)\+]+)/i)?.[1]||'').trim();
+      const email=(v.match(/EMAIL[^:]*:([^\r\n]+)/i)?.[1]||'').trim();
+      const adr=(v.match(/ADR[^:]*:([^\r\n]+)/i)?.[1]||'').replace(/;/g,' ').trim();
+      const saved=await dbAddContact({first,last,phone,email,address:adr,type:'Acquaintance',tier:'B',category:'General SOI',market:'No',holiday:'No',last_contact:null,color:colorFor(contacts.length)});
+      if(saved){imported++;}
+    }
+    closeModal();updateDashboard();showToast(imported+' contact'+(imported!==1?'s':'')+' imported.','success');navigate('contacts');
   };reader.readAsText(file);
 }
 
-// BULK IMPORT
+// ── BULK IMPORT ──
 function openBulkImport(){document.getElementById('bulkModalOverlay').classList.add('open');document.getElementById('bulkPreview').style.display='none';document.getElementById('bulkImportBtn').style.display='none';bulkParsed=[];}
 function closeBulkModal(){document.getElementById('bulkModalOverlay').classList.remove('open');document.getElementById('bulkFile').value='';}
 function closeBulkOutside(e){if(e.target===document.getElementById('bulkModalOverlay'))closeBulkModal();}
@@ -862,30 +1044,43 @@ function processBulkFile(file){
     bulkParsed=rows.filter(r=>r['first name']||r['last name']||r['firstname']||r['name']);
     if(!bulkParsed.length){showToast('No valid rows found.','error');return;}
     const pR=bulkParsed.slice(0,5);const keys=Object.keys(pR[0]||{}).slice(0,6);
-    document.getElementById('bulkPreviewTable').innerHTML=`<table style="width:100%;border-collapse:collapse"><thead><tr>${keys.map(k=>`<th style="padding:5px 9px;background:var(--bg2);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--border);text-align:left">${k}</th>`).join('')}</tr></thead><tbody>${pR.map(r=>`<tr>${keys.map(k=>`<td style="padding:5px 9px;border-bottom:1px solid var(--border-light);font-size:14.5px">${r[k]||''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    document.getElementById('bulkPreviewTable').innerHTML=`<table style="width:100%;border-collapse:collapse"><thead><tr>${keys.map(k=>`<th style="padding:5px 9px;background:var(--bg2);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--border);text-align:left">${k}</th>`).join('')}</tr></thead><tbody>${pR.map(r=>`<tr>${keys.map(k=>`<td style="padding:5px 9px;border-bottom:1px solid var(--border-light);font-size:14px">${r[k]||''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     document.getElementById('bulkCount').textContent=`${bulkParsed.length} contact${bulkParsed.length!==1?'s':''} ready to import.`;
     document.getElementById('bulkPreview').style.display='block';document.getElementById('bulkImportBtn').style.display='inline-flex';
   };
   if(ext==='csv')reader.readAsText(file);else reader.readAsArrayBuffer(file);
 }
-function confirmBulkImport(){
+async function confirmBulkImport(){
   let added=0;
-  bulkParsed.forEach(r=>{
+  showToast('Importing...','');
+  for(const r of bulkParsed){
     const first=(r['first name']||r['firstname']||r['name']||'').trim(),last=(r['last name']||r['lastname']||'').trim();
-    if(!first&&!last)return;
-    contacts.push({id:Date.now()+added,first:first||'—',last,phone:(r['phone']||'').trim(),email:(r['email']||'').trim(),address:(r['address']||'').trim(),bday:(r['birthday']||'').trim(),type:(r['type']||'Other').trim(),tier:(r['tier']||'B').trim(),category:(r['category']||'General SOI').trim(),owner:(r['homeowner status']||'Unknown').trim(),market:(r['market updates']||'No').trim(),holiday:(r['holiday cards']||'No').trim(),notes:(r['notes']||'').trim(),lastContact:null,color:colorFor(contacts.length)});added++;
-  });
-  saveData();closeBulkModal();updateDashboard();showToast(added+' contact'+(added!==1?'s':'')+' imported.','success');navigate('contacts');
+    if(!first&&!last)continue;
+    const saved=await dbAddContact({
+      first:first||'—',last,
+      phone:(r['phone']||'').trim(),email:(r['email']||'').trim(),
+      address:(r['address']||'').trim(),bday:(r['birthday']||null),
+      type:(r['type']||'Past Client').trim(),tier:(r['tier']||'B').trim(),
+      category:(r['category']||'General SOI').trim(),
+      owner:(r['homeowner status']||'Unknown').trim(),
+      market:(r['market updates']||'No').trim(),
+      holiday:(r['holiday cards']||'No').trim(),
+      notes:(r['notes']||'').trim(),last_contact:null,color:colorFor(contacts.length)
+    });
+    if(saved){if(SUPABASE_CONFIGURED && db)contacts.push(saved);added++;}
+  }
+  closeBulkModal();updateDashboard();
+  showToast(added+' contact'+(added!==1?'s':'')+' imported.','success');navigate('contacts');
 }
 
-// EXPORT
+// ── EXPORT ──
 function downloadReport(format){
   if(!contacts.length){showToast('No contacts to export.','error');return;}
-  const cols=['First Name','Last Name','Phone','Email','Address','Birthday','Type','Tier','Category','Homeowner Status','Market Updates','Holiday Cards','Referrals','Notes'];
-  const rows=contacts.map(c=>[c.first,c.last,c.phone||'',c.email||'',c.address||'',c.bday||'',c.type||'',c.tier||'',c.category||'',c.owner||'',c.market||'',c.holiday||'',referrals.filter(r=>r.sourceContactId===c.id).length,c.notes||'']);
+  const cols=['First Name','Last Name','Phone','Email','Address','Birthday','Type','Tier','Category','Homeowner','Market Updates','Holiday Cards','Referrals','Notes'];
+  const rows=contacts.map(c=>[c.first,c.last,c.phone||'',c.email||'',c.address||'',c.bday||'',c.type||'',c.tier||'',c.category||'',c.owner||'',c.market||'',c.holiday||'',referrals.filter(r=>String(r.source_contact_id)===String(c.id)).length,c.notes||'']);
   if(format==='csv'){const csv=[cols,...rows].map(r=>r.map(v=>'"'+(String(v).replace(/"/g,'""'))+'"').join(',')).join('\n');const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='soi-hub-contacts.csv';a.click();showToast('CSV downloaded.','success');}
-  else if(format==='xlsx'){const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([cols,...rows]);ws['!cols']=cols.map(()=>({wch:18}));XLSX.utils.book_append_sheet(wb,ws,'Contacts');const refCols=['First Name','Last Name','Phone','Email','Source','Date','Status','Notes'];const refRows=referrals.map(r=>[r.firstName,r.lastName,r.phone||'',r.email||'',r.sourceName||'',r.date||'',r.status,r.notes||'']);const ws2=XLSX.utils.aoa_to_sheet([refCols,...refRows]);XLSX.utils.book_append_sheet(wb,ws2,'Referrals');const sum=[['SOI Hub Summary'],['Generated',new Date().toLocaleDateString()],['Total Contacts',contacts.length],['Total Referrals',referrals.length],['Referrals Closed',referrals.filter(r=>r.status==='closed').length],['Conversion Rate',referrals.length>0?Math.round(referrals.filter(r=>r.status==='closed').length/referrals.length*100)+'%':'0%']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sum),'Summary');XLSX.writeFile(wb,'soi-hub-report.xlsx');showToast('XLSX downloaded.','success');}
-  else if(format==='pdf'){const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'landscape'});doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('SOI Hub — Contact Report',14,15);doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Generated: '+new Date().toLocaleDateString()+'   Contacts: '+contacts.length+'   Referrals: '+referrals.length+'   Closed: '+referrals.filter(r=>r.status==='closed').length,14,22);doc.autoTable({head:[cols],body:rows,startY:28,styles:{fontSize:7,cellPadding:2.2},headStyles:{fillColor:[161,146,118],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[250,248,245]},margin:{left:14,right:14}});doc.save('soi-hub-report.pdf');showToast('PDF downloaded.','success');}
+  else if(format==='xlsx'){const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([cols,...rows]);ws['!cols']=cols.map(()=>({wch:18}));XLSX.utils.book_append_sheet(wb,ws,'Contacts');const refCols=['First Name','Last Name','Phone','Email','Source','Date','Status','Notes'];const refRows=referrals.map(r=>[r.first_name,r.last_name,r.phone||'',r.email||'',r.source_name||'',r.date||'',r.status,r.notes||'']);const ws2=XLSX.utils.aoa_to_sheet([refCols,...refRows]);XLSX.utils.book_append_sheet(wb,ws2,'Referrals');const sum=[['SOI Hub Summary'],['Generated',new Date().toLocaleDateString()],['Total Contacts',contacts.length],['Total Referrals',referrals.length],['Referrals Closed',referrals.filter(r=>r.status==='closed').length],['Conversion Rate',referrals.length>0?Math.round(referrals.filter(r=>r.status==='closed').length/referrals.length*100)+'%':'0%']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sum),'Summary');XLSX.writeFile(wb,'soi-hub-report.xlsx');showToast('XLSX downloaded.','success');}
+  else if(format==='pdf'){const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'landscape'});doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('SOI Hub — Contact Report',14,15);doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Generated: '+new Date().toLocaleDateString()+'   Contacts: '+contacts.length+'   Referrals: '+referrals.length,14,22);doc.autoTable({head:[cols],body:rows,startY:28,styles:{fontSize:7,cellPadding:2.2},headStyles:{fillColor:[161,146,118],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[250,248,245]},margin:{left:14,right:14}});doc.save('soi-hub-report.pdf');showToast('PDF downloaded.','success');}
 }
 </script>
 </body>
