@@ -338,6 +338,8 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
       <div class="nav-item" onclick="navigate('charts')"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 11.5V8M5.5 11.5V5M9 11.5V2.5M12.5 11.5V7M1 13h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>Charts</div>
       <div class="nav-item" onclick="navigate('reports')"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="1" width="11" height="13" rx="1.2" stroke="currentColor" stroke-width="1.3"/><path d="M5 5h5M5 7.5h5M5 10h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>Reports</div>
       <div class="nav-item" onclick="navigate('ai')"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 5v2.5l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>AI Insights</div>
+      <div class="nav-label">Account</div>
+      <div class="nav-item" onclick="navigate('settings')"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 1v1.5M7.5 12.5V14M1 7.5h1.5M12.5 7.5H14M2.7 2.7l1.1 1.1M11.2 11.2l1.1 1.1M2.7 12.3l1.1-1.1M11.2 3.8l1.1-1.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>Settings</div>
     </div>
     <div class="sidebar-footer">
       <div class="sidebar-user"><div class="user-av" id="sidebarAvatar">ME</div><div><div class="user-nm" id="sidebarName">My Account</div><div class="user-rl" id="sidebarRole">Realtor</div></div></div>
@@ -357,7 +359,7 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
     <div class="page-content">
 
       <div class="view active" id="view-dashboard">
-        <div class="dash-greeting"><h1>Welcome to <span>SOI Hub</span></h1><p id="dashDate">Add your first contact to get started.</p></div>
+        <div class="dash-greeting"><h1>Welcome, <span id="dashGreetName">there</span></h1><p id="dashDate">Add your first contact to get started.</p></div>
         <div class="stat-grid">
           <div class="stat-card"><div class="stat-label">Total Contacts</div><div class="stat-value" id="statTotal">0</div><div class="stat-sub">Your full SOI</div></div>
           <div class="stat-card"><div class="stat-label">Follow-Ups Due</div><div class="stat-value" id="statFollowups">0</div><div class="stat-sub">Contacts needing attention</div></div>
@@ -477,6 +479,39 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
         </div>
       </div>
 
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div style="max-width:560px">
+          <div class="panel" style="margin-bottom:16px">
+            <div class="panel-title" style="margin-bottom:18px">Profile</div>
+            <div class="form-row">
+              <div class="form-group"><label>First Name</label><input class="form-input" id="setFirst" placeholder="Jane"/></div>
+              <div class="form-group"><label>Last Name</label><input class="form-input" id="setLast" placeholder="Smith"/></div>
+            </div>
+            <div class="form-group"><label>Username</label><input class="form-input" id="setUsername" placeholder="yourname"/></div>
+            <div class="form-group"><label>Brokerage / Title</label><input class="form-input" id="setRole" placeholder="e.g. Licensed Realtor, Keller Williams"/></div>
+            <div style="margin-top:4px"><button class="btn btn-primary" onclick="saveProfile()">Save Profile</button></div>
+          </div>
+          <div class="panel" style="margin-bottom:16px">
+            <div class="panel-title" style="margin-bottom:18px">Change Password</div>
+            <div class="form-group"><label>Current Password</label><input class="form-input" id="setCurPass" type="password" placeholder="Enter current password"/></div>
+            <div class="form-group"><label>New Password</label><input class="form-input" id="setNewPass" type="password" placeholder="At least 6 characters"/></div>
+            <div class="form-group"><label>Confirm New Password</label><input class="form-input" id="setNewPass2" type="password" placeholder="Confirm new password"/></div>
+            <div class="login-err" id="setPassErr" style="margin-bottom:10px"></div>
+            <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+          </div>
+          <div class="panel">
+            <div class="panel-title" style="margin-bottom:6px">Accounts</div>
+            <div style="font-size:15px;color:var(--text-muted);margin-bottom:14px">Up to 2 accounts can be registered on this app.</div>
+            <div id="accountsList" style="margin-bottom:16px"></div>
+            <button class="btn btn-ghost" style="color:var(--danger);border-color:rgba(184,92,92,0.3)" onclick="confirmDeleteAccount()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4M6 6.5v4M8 6.5v4M3 4l.7 7.5a.5.5 0 00.5.5h5.6a.5.5 0 00.5-.5L11 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Delete My Account
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -536,10 +571,8 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
 // ══════════════════════════════════════════════
 //  CONFIG — paste your Supabase values here
 // ══════════════════════════════════════════════
-const SUPABASE_URL = 'https://ffohqrubjwrtatxwasei.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmb2hxcnViandydGF0eHdhc2VpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MjAxMjUsImV4cCI6MjA5NzM5NjEyNX0.yFit5qx0tDKGl5VH22HCFJQXQtdd1xpr57ktI2pwfhc';
-const APP_USERNAME = 'Anna-Figueiredo';   // your login username
-const APP_PASSWORD = '&dcbe_+s9?@8W6_'; // your login password
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 // ══════════════════════════════════════════════
 
 // Safe Supabase init — falls back to localStorage if not configured
@@ -553,6 +586,15 @@ if (SUPABASE_CONFIGURED) {
     console.warn('Supabase init failed, using localStorage fallback:', e);
   }
 }
+
+// ── USER ACCOUNT STORAGE (always localStorage — lightweight, single device) ──
+// Accounts: { username: { first, last, role, passwordHash } }
+// Max 2 accounts. Current session stored in sessionStorage.
+function getAccounts() { try { return JSON.parse(localStorage.getItem('soihub_accounts') || '{}'); } catch(e) { return {}; } }
+function saveAccounts(a) { localStorage.setItem('soihub_accounts', JSON.stringify(a)); }
+function hashPassword(p) { return btoa(unescape(encodeURIComponent(p))); }
+function checkPassword(p, hash) { return hashPassword(p) === hash; }
+let currentUser = null;
 
 // UTILS
 const avatarColors=['#6b9e7a','#a19276','#5c85b8','#c9904a','#7a6e8f','#b85c5c','#6b8e9e','#9e8c6b','#8e6b9e','#6b9e8c'];
@@ -641,9 +683,13 @@ async function doLogin(){
   const u=document.getElementById('loginUser').value.trim().toLowerCase();
   const p=document.getElementById('loginPass').value;
   const errEl=document.getElementById('loginErr');
-  if(u!==APP_USERNAME.toLowerCase()||p!==APP_PASSWORD){errEl.style.display='block';return;}
+  const accounts=getAccounts();
+  if(!accounts[u]||!checkPassword(p,accounts[u].passwordHash)){
+    errEl.textContent='Incorrect username or password.';errEl.style.display='block';return;
+  }
   errEl.style.display='none';
-  sessionStorage.setItem('soihub_auth','1');
+  currentUser={username:u,...accounts[u]};
+  sessionStorage.setItem('soihub_session',JSON.stringify({username:u}));
   await initApp();
 }
 async function doRegister(){
@@ -656,14 +702,20 @@ async function doRegister(){
   const e=document.getElementById('regErr');
   if(!u||!p){e.textContent='Username and password required.';e.style.display='block';return;}
   if(p!==p2){e.textContent='Passwords do not match.';e.style.display='block';return;}
-  // For single-user app, just validate matches config
-  if(u!==APP_USERNAME.toLowerCase()||p!==APP_PASSWORD){e.textContent='Registration is disabled. Use the configured credentials.';e.style.display='block';return;}
-  sessionStorage.setItem('soihub_auth','1');
+  if(u.length<3){e.textContent='Username must be at least 3 characters.';e.style.display='block';return;}
+  if(p.length<6){e.textContent='Password must be at least 6 characters.';e.style.display='block';return;}
+  const accounts=getAccounts();
+  if(accounts[u]){e.textContent='Username already taken.';e.style.display='block';return;}
+  if(Object.keys(accounts).length>=2){e.textContent='Maximum of 2 accounts reached.';e.style.display='block';return;}
+  accounts[u]={first,last,role:role||'Licensed Realtor',passwordHash:hashPassword(p)};
+  saveAccounts(accounts);
+  currentUser={username:u,...accounts[u]};
+  sessionStorage.setItem('soihub_session',JSON.stringify({username:u}));
   await initApp();
 }
 function doLogout(){
-  sessionStorage.removeItem('soihub_auth');
-  contacts=[];referrals=[];
+  sessionStorage.removeItem('soihub_session');
+  currentUser=null;contacts=[];referrals=[];
   document.getElementById('appShell').classList.remove('visible');
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('loginUser').value='';
@@ -673,19 +725,33 @@ function doLogout(){
 async function initApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appShell').classList.add('visible');
-  document.getElementById('sidebarName').textContent=APP_USERNAME;
-  document.getElementById('sidebarRole').textContent='Licensed Realtor';
-  document.getElementById('sidebarAvatar').textContent=APP_USERNAME.slice(0,2).toUpperCase();
+  const displayName=[currentUser.first,currentUser.last].filter(Boolean).join(' ')||currentUser.username;
+  document.getElementById('sidebarName').textContent=displayName;
+  document.getElementById('sidebarRole').textContent=currentUser.role||'Licensed Realtor';
+  const initials=((currentUser.first||currentUser.username||'')[0]||'').toUpperCase()+((currentUser.last||'')[0]||'').toUpperCase();
+  document.getElementById('sidebarAvatar').textContent=initials||currentUser.username.slice(0,2).toUpperCase();
   if (!SUPABASE_CONFIGURED) {
     showToast('Running in local mode — add Supabase config to enable cloud sync.','');
   }
   await loadAllData();
   const now=new Date();
+  const greetName=currentUser.first||currentUser.username;
+  document.getElementById('dashGreetName').textContent=greetName;
   document.getElementById('dashDate').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+(contacts.length?' · '+contacts.length+' contact'+(contacts.length!==1?'s':'')+' in your SOI.':' · Add your first contact to get started.');
   navigate('dashboard');
 }
 window.addEventListener('DOMContentLoaded',async()=>{
-  if(sessionStorage.getItem('soihub_auth')==='1') await initApp();
+  const saved=sessionStorage.getItem('soihub_session');
+  if(saved){
+    try{
+      const s=JSON.parse(saved);
+      const accounts=getAccounts();
+      if(s.username&&accounts[s.username]){
+        currentUser={username:s.username,...accounts[s.username]};
+        await initApp();
+      }
+    }catch(e){}
+  }
 });
 
 // ── MOBILE SIDEBAR ──
@@ -703,7 +769,7 @@ function navigate(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
-  const titles={dashboard:'Dashboard',contacts:'Contacts',profile:'Contact Profile',referrals:'Referrals',followup:'Follow-Up Center',charts:'Charts',reports:'Reports',ai:'AI Insights'};
+  const titles={dashboard:'Dashboard',contacts:'Contacts',profile:'Contact Profile',referrals:'Referrals',followup:'Follow-Up Center',charts:'Charts',reports:'Reports',ai:'AI Insights',settings:'Settings'};
   document.getElementById('topbarTitle').textContent=titles[view]||'SOI Hub';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+view+"'"))n.classList.add('active');});
   closeSidebar();
@@ -714,6 +780,7 @@ function navigate(view){
   if(view==='ai')updateAI();
   if(view==='referrals')updateReferralView();
   if(view==='charts')setTimeout(renderCharts,60);
+  if(view==='settings')openSettings();
 }
 
 // ── DASHBOARD ──
@@ -1074,6 +1141,94 @@ async function confirmBulkImport(){
 }
 
 // ── EXPORT ──
+// ── SETTINGS ──
+function openSettings(){
+  navigate('settings');
+  const u=currentUser;
+  document.getElementById('setFirst').value=u.first||'';
+  document.getElementById('setLast').value=u.last||'';
+  document.getElementById('setUsername').value=u.username||'';
+  document.getElementById('setRole').value=u.role||'';
+  document.getElementById('setCurPass').value='';
+  document.getElementById('setNewPass').value='';
+  document.getElementById('setNewPass2').value='';
+  document.getElementById('setPassErr').style.display='none';
+  renderAccountsList();
+}
+
+function renderAccountsList(){
+  const accounts=getAccounts();
+  const list=document.getElementById('accountsList');
+  if(!list)return;
+  list.innerHTML=Object.entries(accounts).map(([u,a])=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light)">
+      <div class="user-av" style="background:var(--primary);width:34px;height:34px;font-size:13px">${((a.first||u)[0]||'').toUpperCase()}${((a.last||'')[0]||'').toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:500;color:var(--dark)">${[a.first,a.last].filter(Boolean).join(' ')||u}</div>
+        <div style="font-size:13px;color:var(--text-muted)">@${u} · ${a.role||'Realtor'}</div>
+      </div>
+      ${u===currentUser.username?'<span class="mini-tag badge-green">You</span>':''}
+    </div>`).join('');
+}
+
+function saveProfile(){
+  const first=document.getElementById('setFirst').value.trim();
+  const last=document.getElementById('setLast').value.trim();
+  const newUsername=document.getElementById('setUsername').value.trim().toLowerCase();
+  const role=document.getElementById('setRole').value.trim();
+  if(!newUsername||newUsername.length<3){showToast('Username must be at least 3 characters.','error');return;}
+  const accounts=getAccounts();
+  // If username changed, check it's not taken
+  if(newUsername!==currentUser.username&&accounts[newUsername]){showToast('Username already taken.','error');return;}
+  // Rename key if username changed
+  if(newUsername!==currentUser.username){
+    accounts[newUsername]={...accounts[currentUser.username]};
+    delete accounts[currentUser.username];
+    sessionStorage.setItem('soihub_session',JSON.stringify({username:newUsername}));
+  }
+  accounts[newUsername]={...accounts[newUsername],first,last,role:role||'Licensed Realtor'};
+  saveAccounts(accounts);
+  currentUser={...currentUser,username:newUsername,first,last,role:role||'Licensed Realtor'};
+  // Update sidebar
+  const displayName=[first,last].filter(Boolean).join(' ')||newUsername;
+  document.getElementById('sidebarName').textContent=displayName;
+  document.getElementById('sidebarRole').textContent=role||'Licensed Realtor';
+  const initials=((first||newUsername)[0]||'').toUpperCase()+((last||'')[0]||'').toUpperCase();
+  document.getElementById('sidebarAvatar').textContent=initials||newUsername.slice(0,2).toUpperCase();
+  renderAccountsList();
+  showToast('Profile saved.','success');
+}
+
+function changePassword(){
+  const cur=document.getElementById('setCurPass').value;
+  const nw=document.getElementById('setNewPass').value;
+  const nw2=document.getElementById('setNewPass2').value;
+  const errEl=document.getElementById('setPassErr');
+  const accounts=getAccounts();
+  if(!checkPassword(cur,accounts[currentUser.username].passwordHash)){
+    errEl.textContent='Current password is incorrect.';errEl.style.display='block';return;
+  }
+  if(nw.length<6){errEl.textContent='New password must be at least 6 characters.';errEl.style.display='block';return;}
+  if(nw!==nw2){errEl.textContent='New passwords do not match.';errEl.style.display='block';return;}
+  accounts[currentUser.username].passwordHash=hashPassword(nw);
+  saveAccounts(accounts);
+  currentUser.passwordHash=hashPassword(nw);
+  document.getElementById('setCurPass').value='';
+  document.getElementById('setNewPass').value='';
+  document.getElementById('setNewPass2').value='';
+  errEl.style.display='none';
+  showToast('Password updated.','success');
+}
+
+function confirmDeleteAccount(){
+  if(!confirm('Are you sure you want to delete your account? This cannot be undone.')){return;}
+  const accounts=getAccounts();
+  delete accounts[currentUser.username];
+  saveAccounts(accounts);
+  doLogout();
+  showToast('Account deleted.','');
+}
+
 function downloadReport(format){
   if(!contacts.length){showToast('No contacts to export.','error');return;}
   const cols=['First Name','Last Name','Phone','Email','Address','Birthday','Type','Tier','Category','Homeowner','Market Updates','Holiday Cards','Referrals','Notes'];
