@@ -322,6 +322,32 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
   </div>
 </div>
 
+<!-- SUPABASE SETUP SCREEN -->
+<div id="setupScreen" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:var(--bg);">
+  <div style="width:460px;max-width:95vw;">
+    <div class="login-logo">
+      <div class="login-logo-mark"><div class="login-logo-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="7" r="4" stroke="#fff" stroke-width="1.8"/><path d="M3 20c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></div>SOI Hub</div>
+      <div class="login-logo-sub">Sphere of Influence</div>
+    </div>
+    <div class="login-card">
+      <div class="login-title">Connect Your Database</div>
+      <div class="login-sub" style="margin-bottom:22px">Enter your Supabase credentials to enable cloud sync across all your devices. You only need to do this once.</div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;font-size:14px;color:var(--text-muted);line-height:1.6">
+        Find these in your <strong style="color:var(--dark)">Supabase dashboard</strong> → Project Settings → API.<br>
+        You need the <strong style="color:var(--dark)">Project URL</strong> and the <strong style="color:var(--dark)">anon public</strong> key.
+      </div>
+      <div class="form-group"><label>Project URL</label><input class="form-input" id="setupUrl" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/></div>
+      <div class="form-group"><label>Anon Public Key</label><textarea class="form-input" id="setupKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." style="min-height:90px;resize:none;font-size:13px;font-family:monospace" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></div>
+      <div class="login-err" id="setupErr" style="margin-bottom:12px">Please enter both fields.</div>
+      <button class="btn btn-primary btn-block" onclick="saveSupabaseSetup()">Connect &amp; Continue</button>
+      <div style="text-align:center;margin-top:14px">
+        <span style="font-size:13px;color:var(--text-muted)">Don't have Supabase yet? </span>
+        <a href="https://supabase.com" target="_blank" style="font-size:13px;color:var(--primary);text-decoration:none;font-weight:500">supabase.com →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="loadingBar" style="display:none;position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--primary-light));z-index:9999;animation:loadpulse 1.2s ease-in-out infinite;"></div>
 <style>@keyframes loadpulse{0%{opacity:1}50%{opacity:0.4}100%{opacity:1}}</style>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -500,6 +526,11 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
             <div class="login-err" id="setPassErr" style="margin-bottom:10px"></div>
             <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
           </div>
+          <div class="panel" style="margin-bottom:16px">
+            <div class="panel-title" style="margin-bottom:6px">Database Connection</div>
+            <div style="font-size:15px;color:var(--text-muted);margin-bottom:14px" id="supabaseStatusText">Connected to Supabase.</div>
+            <button class="btn btn-ghost btn-sm" onclick="showReconfigureSupabase()">Reconnect / Change Supabase</button>
+          </div>
           <div class="panel">
             <div class="panel-title" style="margin-bottom:6px">Accounts</div>
             <div style="font-size:15px;color:var(--text-muted);margin-bottom:14px">Up to 2 accounts can be registered on this app.</div>
@@ -568,23 +599,67 @@ body{font-family:'Barlow Semi Condensed',sans-serif;font-weight:400;background:v
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-// ══════════════════════════════════════════════
-//  CONFIG — paste your Supabase values here
-// ══════════════════════════════════════════════
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-// ══════════════════════════════════════════════
-
-// Safe Supabase init — falls back to localStorage if not configured
-const SUPABASE_CONFIGURED = SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
+// ── Supabase config stored in localStorage so user can enter via UI ──
 let db = null;
-if (SUPABASE_CONFIGURED) {
+let SUPABASE_CONFIGURED = false;
+
+function getSupabaseConfig() {
+  try { return JSON.parse(localStorage.getItem('soihub_supabase_config') || 'null'); } catch(e) { return null; }
+}
+function saveSupabaseConfig(url, key) {
+  localStorage.setItem('soihub_supabase_config', JSON.stringify({url, key}));
+}
+function initSupabase(url, key) {
   try {
     const { createClient } = supabase;
-    db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    db = createClient(url, key);
+    SUPABASE_CONFIGURED = true;
+    return true;
   } catch(e) {
-    console.warn('Supabase init failed, using localStorage fallback:', e);
+    console.warn('Supabase init failed:', e);
+    db = null;
+    SUPABASE_CONFIGURED = false;
+    return false;
   }
+}
+// Auto-init from saved config on load
+(function() {
+  const cfg = getSupabaseConfig();
+  if (cfg && cfg.url && cfg.key) {
+    initSupabase(cfg.url, cfg.key);
+  }
+})();
+
+// ── SUPABASE SETUP ──
+function showSetupScreen() {
+  document.getElementById('setupScreen').style.display = 'flex';
+  document.getElementById('loginScreen').style.display = 'none';
+}
+function hideSetupScreen() {
+  document.getElementById('setupScreen').style.display = 'none';
+}
+async function saveSupabaseSetup() {
+  const url = document.getElementById('setupUrl').value.trim().replace(/\/+$/, '');
+  const key = document.getElementById('setupKey').value.trim();
+  const errEl = document.getElementById('setupErr');
+  if (!url || !key) { errEl.textContent='Please enter both fields.'; errEl.style.display='block'; return; }
+  if (!url.startsWith('https://')) { errEl.textContent='URL must start with https://'; errEl.style.display='block'; return; }
+  if (!key.startsWith('eyJ')) { errEl.textContent='That doesn\'t look like a valid anon key.'; errEl.style.display='block'; return; }
+  errEl.style.display = 'none';
+  const ok = initSupabase(url, key);
+  if (!ok) { errEl.textContent='Could not connect. Double-check your URL and key.'; errEl.style.display='block'; return; }
+  // Test connection with a lightweight query
+  try {
+    await db.from('contacts').select('id').limit(1);
+  } catch(e) {
+    errEl.textContent = 'Connected but could not query — make sure the contacts table exists.';
+    errEl.style.display = 'block';
+    return;
+  }
+  saveSupabaseConfig(url, key);
+  hideSetupScreen();
+  document.getElementById('loginScreen').style.display = 'flex';
+  showToast('Supabase connected! Create your account to get started.', 'success');
 }
 
 // ── USER ACCOUNT STORAGE (always localStorage — lightweight, single device) ──
@@ -730,9 +805,7 @@ async function initApp(){
   document.getElementById('sidebarRole').textContent=currentUser.role||'Licensed Realtor';
   const initials=((currentUser.first||currentUser.username||'')[0]||'').toUpperCase()+((currentUser.last||'')[0]||'').toUpperCase();
   document.getElementById('sidebarAvatar').textContent=initials||currentUser.username.slice(0,2).toUpperCase();
-  if (!SUPABASE_CONFIGURED) {
-    showToast('Running in local mode — add Supabase config to enable cloud sync.','');
-  }
+
   await loadAllData();
   const now=new Date();
   const greetName=currentUser.first||currentUser.username;
@@ -741,6 +814,11 @@ async function initApp(){
   navigate('dashboard');
 }
 window.addEventListener('DOMContentLoaded',async()=>{
+  // If Supabase not configured, show setup screen first
+  if (!SUPABASE_CONFIGURED) {
+    showSetupScreen();
+    return;
+  }
   const saved=sessionStorage.getItem('soihub_session');
   if(saved){
     try{
@@ -749,9 +827,11 @@ window.addEventListener('DOMContentLoaded',async()=>{
       if(s.username&&accounts[s.username]){
         currentUser={username:s.username,...accounts[s.username]};
         await initApp();
+        return;
       }
     }catch(e){}
   }
+  document.getElementById('loginScreen').style.display='flex';
 });
 
 // ── MOBILE SIDEBAR ──
@@ -1142,6 +1222,12 @@ async function confirmBulkImport(){
 
 // ── EXPORT ──
 // ── SETTINGS ──
+function showReconfigureSupabase(){
+  document.getElementById('setupUrl').value = (getSupabaseConfig()||{}).url||'';
+  document.getElementById('setupKey').value = (getSupabaseConfig()||{}).key||'';
+  document.getElementById('setupErr').style.display='none';
+  showSetupScreen();
+}
 function openSettings(){
   navigate('settings');
   const u=currentUser;
@@ -1154,6 +1240,8 @@ function openSettings(){
   document.getElementById('setNewPass2').value='';
   document.getElementById('setPassErr').style.display='none';
   renderAccountsList();
+  const statusEl = document.getElementById('supabaseStatusText');
+  if(statusEl) statusEl.textContent = SUPABASE_CONFIGURED ? 'Connected to Supabase — data syncs across devices.' : 'Not connected — data is stored locally on this device only.';
 }
 
 function renderAccountsList(){
